@@ -8,10 +8,6 @@ const assessmentSchema = new Schema(
       required: true,
       index: true,
     },
-    completedAt: {
-      type: Date,
-      default: Date.now,
-    },
     // The 'answers' object maps directly to the questions
     answers: {
       // Section 1: Primary Concerns
@@ -47,7 +43,6 @@ const assessmentSchema = new Schema(
       goals: [{ type: String }], // Q12
 
       // Section 5: Safety Information
-      
       safety: {
         hasThoughtsOfSelfHarm: { type: Boolean }, // Q13
       },
@@ -57,4 +52,3 @@ const assessmentSchema = new Schema(
 );
 
 export const Assessment = mongoose.model("Assessment", assessmentSchema);
-
