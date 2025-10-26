@@ -17,6 +17,31 @@ const qualificationSchema = new Schema(
   { _id: false }
 ); // Using _id: false prevents MongoDB from creating ObjectIds for subdocuments
 
+const feedbackSchema = new Schema(
+  {
+    patientId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 5,
+    },
+    comment: {
+      type: String,
+      maxlength: 1000,
+    },
+    sessionId: {
+      type: Schema.Types.ObjectId,
+      ref: "Session",
+    },
+  },
+  { timestamps: true }
+);
+
 /**
  * Main schema for the Therapist Profile.
  */
@@ -102,6 +127,10 @@ const therapistProfileSchema = new Schema(
       max: 5,
       default: 0,
     },
+    feedbacks: {
+      type: [feedbackSchema],
+      default: [],
+    },
   },
   {
     // Automatically add createdAt and updatedAt timestamps
@@ -109,4 +138,4 @@ const therapistProfileSchema = new Schema(
   }
 );
 
-export const Therapist = mongoose.model("Therapist", therapistSchema);
+export const Therapist = mongoose.model("Therapist", therapistProfileSchema);
