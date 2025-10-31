@@ -3,39 +3,57 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 
-const registerUser = asyncHandler(async (req, res) => {
-/*
-    Register user workflow (high-level):
-
-    1. Read user input from req.body (expect fullName, email, password).
-    2. Validate required fields are present and not empty.
-    3. Verify no existing user has the same email.
-    4. (If avatar/images are supported) upload them to Cloudinary and confirm uploads succeed.
-    5. Create the new user record in the database.
-    6. Remove sensitive fields (password, refreshtoken) from the object returned to the client.
-    7. On success respond with HTTP 201 and the created user; on failure throw an ApiError with an appropriate status and message.
-*/
-
-  const { fullName, email, password } = req.body;
-  if ([fullName, email, password].some((field) => field?.trim() === "")) {
-    throw new ApiError(400, "All fields are required");
-  }
-
-  const existedUser = await User.findOne({ email });
-
-  if (existedUser) {
-    throw new ApiError(400, "User with this email already exists");
-  }
-
-  const user = await User.create({ fullName, email, password });
-
-  const createdUser = user.toObject();
-  delete createdUser.password;
-  delete createdUser.refreshToken;
-
+/**
+ * Get all users (admin functionality)
+ * @route GET /api/v1/users
+ * @access Private (requires authentication and supervisor role)
+ */
+const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find().select("-password -refreshToken");
+  
   res
-    .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered successfully"));
+    .status(200)
+    .json(new ApiResponse(200, users, "Users fetched successfully"));
 });
 
-export { registerUser };
+/**
+ * Get user by ID
+ * @route GET /api/v1/users/:id
+ * @access Private (requires authentication)
+ */
+const getUserById = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id).select("-password -refreshToken");
+  
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "User fetched successfully"));
+});
+
+/**
+ * Update user profile
+ * @route PATCH /api/v1/users/profile
+ * @access Private (requires authentication)
+ */
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const { fullName } = req.body;
+  
+  if (!fullName || fullName.trim() === "") {
+    throw new ApiError(400, "Full name is required");
+  }
+  
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { fullName },
+    { new: true, runValidators: true }
+  ).select("-password -refreshToken");
+  
+  res
+    .status(200)
+    .json(new ApiResponse(200, user, "Profile updated successfully"));
+});
+
+export { getAllUsers, getUserById, updateUserProfile };

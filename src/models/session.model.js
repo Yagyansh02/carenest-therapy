@@ -109,8 +109,9 @@ const sessionSchema = new Schema(
     timestamps: true,
   }
 );
-// Compound index for efficient queries
+// Compound indexes for efficient queries
 sessionSchema.index({ patientId: 1, scheduledAt: -1 });
 sessionSchema.index({ therapistId: 1, scheduledAt: -1 });
+sessionSchema.index({ status: 1, scheduledAt: -1 });
 
 export const Session = mongoose.model("Session", sessionSchema);
