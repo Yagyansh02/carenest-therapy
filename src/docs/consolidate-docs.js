@@ -24,7 +24,6 @@ const OUTPUT_FILE = path.join(DOCS_DIR, 'api.json');
 
 // List of feature documentation files to consolidate
 const FEATURE_FILES = [
-  'auth.json',
   'users.json',
   'therapists.json',
   // Add more feature files here as you create them
