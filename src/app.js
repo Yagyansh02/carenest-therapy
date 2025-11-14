@@ -28,10 +28,12 @@ app.get("/health", (req, res) => {
 // routes import
 import authRouter from './routes/auth.routes.js';
 import userRouter from './routes/user.routes.js';
+import therapistRouter from './routes/therapist.routes.js';
 
 //routes declaration
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/therapists", therapistRouter);
 
 // error handling middleware
 import { errorHandler, notFound } from "./middlewares/error.middleware.js";

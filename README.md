@@ -11,10 +11,12 @@ CareNest Therapy is a comprehensive mental health and wellness platform that con
 - ✅ **User Authentication** - Secure JWT-based authentication with access & refresh tokens
 - ✅ **Role-Based Access Control** - Three user roles: Patient, Therapist, Supervisor
 - ✅ **User Management** - Complete CRUD operations for users
-- ✅ **Session Management** - Therapy session scheduling and tracking
-- ✅ **Feedback System** - Patient feedback for therapists and supervisors
-- ✅ **Security** - Password hashing, HTTP-only cookies, CORS protection
-- 🔜 **Profile Management** - Therapist and patient profiles
+- ✅ **Therapist Profile Management** - Complete profile system with qualifications, specializations, and availability
+- ✅ **Student-Supervisor System** - Link students to supervisors with verification workflow
+- ✅ **Search & Filter** - Advanced therapist search with multiple filters and sorting
+- ✅ **Security** - Password hashing, HTTP-only cookies, CORS protection, input validation
+- 🔜 **Session Management** - Therapy session scheduling and tracking
+- 🔜 **Feedback System** - Patient feedback for therapists and supervisors
 - 🔜 **Appointment Booking** - Schedule and manage therapy sessions
 - 🔜 **Payment Integration** - Session payment processing
 
@@ -108,6 +110,23 @@ carenest-therapy/
 
 ### Supervisor Only
 - `GET /api/v1/users` - Get all users
+
+### Therapist Management (Public)
+- `GET /api/v1/therapists` - Get all therapists (with filters)
+- `GET /api/v1/therapists/:id` - Get therapist by ID
+
+### Therapist Profile (Therapist Only)
+- `POST /api/v1/therapists/profile` - Create profile
+- `PUT /api/v1/therapists/profile` - Update profile
+- `GET /api/v1/therapists/me` - Get own profile
+- `PUT /api/v1/therapists/availability` - Update availability
+- `PUT /api/v1/therapists/qualifications` - Update qualifications
+- `PUT /api/v1/therapists/specializations` - Update specializations
+- `DELETE /api/v1/therapists/profile` - Delete profile
+
+### Supervisor Operations
+- `GET /api/v1/therapists/students` - Get students
+- `PUT /api/v1/therapists/verify/:id` - Verify therapist
 
 📖 **[View complete API documentation](./docs/AUTH_README.md)**
 
