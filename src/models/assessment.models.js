@@ -8,43 +8,94 @@ const assessmentSchema = new Schema(
       required: true,
       index: true,
     },
-    // The 'answers' object maps directly to the questions
+    
+
     answers: {
-      // Section 1: Primary Concerns
-
-      primaryConcern: { type: String, trim: true }, // Q1
-      symptoms: [{ type: String }], // Q2
-
-      // Section 2: Mood & Feelings (Quantifiable scores)
-
-      feelingLow: { type: Number, min: 0, max: 3 }, // Q3
-      noInterest: { type: Number, min: 0, max: 3 }, // Q4
-      feelingAnxious: { type: Number, min: 0, max: 3 }, // Q5
-      worrying: { type: Number, min: 0, max: 3 }, // Q6
-
-      // Section 3: Daily Life & Functioning
-      sleepHours: { type: Number }, // Q7
-      sleepQuality: { type: String, enum: ["Good", "Fair", "Poor"] }, // Q8
-      energyLevel: {
+      // Q1: Age Group (from name="age")
+      ageGroup: {
         type: String,
-        enum: ["High", "Moderate", "Low", "Very Low"],
-      }, // Q9
-
-      // Section 4: Goals & Preferences (For matching algorithm)
-
-      hasHadTherapy: { type: Boolean }, // Q10
-      therapistPreferences: {
-        gender: {
-          type: String,
-          enum: ["Male", "Female", "Non-binary", "No Preference"],
-        },
-        // Add other preferences from Q11 as needed
+        enum: ["18-24", "25-34", "35-44", "45-54", "55-64", "65+"],
       },
-      goals: [{ type: String }], // Q12
-
-      // Section 5: Safety Information
-      safety: {
-        hasThoughtsOfSelfHarm: { type: Boolean }, // Q13
+      
+      // Q2: Occupation (from name="occupation")
+      occupation: {
+        type: String,
+        enum: [
+          "Student",
+          "Employed (Full-time)",
+          "Employed (Part-time)",
+          "Self-employed",
+          "Unemployed",
+          "Retired",
+        ],
+      },
+      
+      // Q3: Lifestyle (from name="lifestyle")
+      lifestyle: {
+        type: String,
+        enum: [
+          "High-stress, fast-paced",
+          "Moderately busy, some downtime",
+          "Balanced between work and personal life",
+          "Relaxed, low-stress",
+        ],
+      },
+      
+      // Q4: Physical Activity (from name="activity")
+      activityLevel: {
+        type: String,
+        enum: [
+          "Sedentary (little to no exercise)",
+          "Lightly active (walking, yoga, stretching)",
+          "Moderately active (exercise 3-4 days a week)",
+          "Very active (intense workouts, sports, daily exercise)",
+        ],
+      },
+      
+      // Q5: Mental Health Concerns (from name="concerns")
+      concerns: {
+        type: [String],
+        enum: [
+          "Anxiety",
+          "Depression",
+          "Overthinking",
+          "Stress",
+          "Low self-esteem",
+          "Self-improvement",
+          "Anger issues",
+          "Grief/loss",
+          "Sleep disturbances",
+          "OCD",
+          "Sexual dysfunction",
+          "Bipolar disorder",
+          "Addiction",
+          "Autism spectrum disorder",
+          "None of the above"
+        ]
+      },
+      
+      // Q5: "Other concerns" text input
+      otherConcern: {
+        type: String,
+        trim: true,
+      },
+      
+      // Q6: Duration (from name="duration")
+      duration: {
+        type: String,
+        enum: [
+          "Less than a month",
+          "1-6 months",
+          "6 months - 1 year",
+          "More than 1 year",
+        ],
+      },
+      
+      // Q7: Impact Level (from name="impact")
+      impactLevel: {
+        type: Number,
+        min: 1,
+        max: 5,
       },
     },
   },

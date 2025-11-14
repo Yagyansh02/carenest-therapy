@@ -11,8 +11,8 @@ const router = Router();
 // All routes require authentication
 router.use(verifyJWT);
 
-// Get all users (supervisor only)
-router.route("/").get(verifyRole("supervisor"), getAllUsers);
+
+router.route("/").get(verifyRole("admin"), getAllUsers);
 
 // Update current user's profile
 router.route("/profile").patch(updateUserProfile);

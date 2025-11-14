@@ -1,0 +1,556 @@
+{
+  "paths": {
+    "/api/v1/therapists/profile": {
+      "post": {
+        "tags": ["Therapists"],
+        "summary": "Create therapist profile",
+        "description": "Create a detailed therapist profile with qualifications, specializations, and availability",
+        "operationId": "createTherapistProfile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["specializations", "qualifications", "experience"],
+                "properties": {
+                  "specializations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["anxiety", "depression", "trauma"]
+                  },
+                  "qualifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["PhD in Clinical Psychology", "Licensed Therapist"]
+                  },
+                  "experience": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "example": 5,
+                    "description": "Years of experience"
+                  },
+                  "bio": {
+                    "type": "string",
+                    "example": "Experienced therapist specializing in cognitive behavioral therapy..."
+                  },
+                  "availability": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "day": {
+                          "type": "string",
+                          "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+                          "example": "Monday"
+                        },
+                        "slots": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "example": ["09:00-10:00", "14:00-15:00"]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Therapist profile created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapist": { "$ref": "#/components/schemas/Therapist" }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "409": {
+            "description": "Therapist profile already exists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Therapists"],
+        "summary": "Update therapist profile",
+        "description": "Update therapist profile information",
+        "operationId": "updateTherapistProfile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "specializations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "qualifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "experience": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "bio": {
+                    "type": "string"
+                  },
+                  "availability": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "day": {
+                          "type": "string"
+                        },
+                        "slots": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapist": { "$ref": "#/components/schemas/Therapist" }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/{id}": {
+      "get": {
+        "tags": ["Therapists"],
+        "summary": "Get therapist by ID",
+        "description": "Retrieve detailed information about a specific therapist",
+        "operationId": "getTherapistById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Therapist ID",
+            "schema": {
+              "type": "string",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Therapist retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapist": { "$ref": "#/components/schemas/Therapist" }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists": {
+      "get": {
+        "tags": ["Therapists"],
+        "summary": "Get all therapists",
+        "description": "Retrieve a list of all therapists with optional filtering",
+        "operationId": "getAllTherapists",
+        "parameters": [
+          {
+            "name": "specialization",
+            "in": "query",
+            "description": "Filter by specialization",
+            "schema": {
+              "type": "string",
+              "example": "anxiety"
+            }
+          },
+          {
+            "name": "minExperience",
+            "in": "query",
+            "description": "Minimum years of experience",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Results per page",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Therapists retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapists": {
+                              "type": "array",
+                              "items": { "$ref": "#/components/schemas/Therapist" }
+                            },
+                            "total": {
+                              "type": "integer"
+                            },
+                            "page": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/availability": {
+      "put": {
+        "tags": ["Therapists"],
+        "summary": "Update availability",
+        "description": "Update therapist's availability schedule",
+        "operationId": "updateAvailability",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["availability"],
+                "properties": {
+                  "availability": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "day": {
+                          "type": "string",
+                          "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                        },
+                        "slots": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Availability updated successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/qualifications": {
+      "put": {
+        "tags": ["Therapists"],
+        "summary": "Update qualifications",
+        "description": "Update therapist's qualifications",
+        "operationId": "updateQualifications",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["qualifications"],
+                "properties": {
+                  "qualifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["PhD in Clinical Psychology", "Licensed Therapist", "CBT Certified"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Qualifications updated successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/specializations": {
+      "put": {
+        "tags": ["Therapists"],
+        "summary": "Update specializations",
+        "description": "Update therapist's areas of specialization",
+        "operationId": "updateSpecializations",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["specializations"],
+                "properties": {
+                  "specializations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["anxiety", "depression", "trauma", "PTSD"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Specializations updated successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Therapist": {
+        "allOf": [
+          { "$ref": "#/components/schemas/User" },
+          {
+            "type": "object",
+            "properties": {
+              "specializations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": ["anxiety", "depression", "trauma"]
+              },
+              "qualifications": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": ["PhD in Clinical Psychology", "Licensed Therapist"]
+              },
+              "experience": {
+                "type": "integer",
+                "example": 5,
+                "description": "Years of experience"
+              },
+              "bio": {
+                "type": "string",
+                "example": "Experienced therapist specializing in CBT..."
+              },
+              "availability": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "day": {
+                      "type": "string",
+                      "example": "Monday"
+                    },
+                    "slots": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": ["09:00-10:00", "14:00-15:00"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
