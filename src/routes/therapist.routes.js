@@ -11,7 +11,7 @@ import {
   verifyTherapist,
   deleteTherapistProfile,
   getMyProfile,
-} from "../controllers/therapist.controller.js";
+} from "../controllers/therapist.controllers.js";
 import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
 const router = Router();

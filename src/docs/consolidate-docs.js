@@ -26,6 +26,7 @@ const OUTPUT_FILE = path.join(DOCS_DIR, 'api.json');
 const FEATURE_FILES = [
   'users.json',
   'therapists.json',
+  'supervisors.json',
   // Add more feature files here as you create them
 ];
 

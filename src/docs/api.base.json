@@ -35,6 +35,10 @@
     {
       "name": "Therapists",
       "description": "Therapist profile and management"
+    },
+    {
+      "name": "Supervisors",
+      "description": "Supervisor profile and student management"
     }
   ],
   "paths": {
