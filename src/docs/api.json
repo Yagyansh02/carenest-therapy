@@ -873,52 +873,65 @@
                   "qualifications": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "degree": {
+                          "type": "string"
+                        },
+                        "institution": {
+                          "type": "string"
+                        },
+                        "year": {
+                          "type": "integer"
+                        }
+                      }
                     },
                     "example": [
-                      "PhD in Clinical Psychology",
-                      "Licensed Therapist"
+                      {
+                        "degree": "PhD in Clinical Psychology",
+                        "institution": "Harvard University",
+                        "year": 2020
+                      }
                     ]
                   },
-                  "experience": {
+                  "yearsOfExperience": {
                     "type": "integer",
                     "minimum": 0,
                     "example": 5,
                     "description": "Years of experience"
+                  },
+                  "sessionRate": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 1500
+                  },
+                  "licenseNumber": {
+                    "type": "string",
+                    "example": "TH123456"
+                  },
+                  "isStudent": {
+                    "type": "boolean",
+                    "default": false
                   },
                   "bio": {
                     "type": "string",
                     "example": "Experienced therapist specializing in cognitive behavioral therapy..."
                   },
                   "availability": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "day": {
-                          "type": "string",
-                          "enum": [
-                            "Monday",
-                            "Tuesday",
-                            "Wednesday",
-                            "Thursday",
-                            "Friday",
-                            "Saturday",
-                            "Sunday"
-                          ],
-                          "example": "Monday"
-                        },
-                        "slots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "example": [
-                            "09:00-10:00",
-                            "14:00-15:00"
-                          ]
+                    "type": "object",
+                    "example": {
+                      "monday": [
+                        {
+                          "start": "09:00",
+                          "end": "17:00"
                         }
-                      }
+                      ],
+                      "wednesday": [
+                        {
+                          "start": "10:00",
+                          "end": "14:00"
+                        }
+                      ]
                     }
                   }
                 }
@@ -1014,32 +1027,36 @@
                   "qualifications": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "degree": {
+                          "type": "string"
+                        },
+                        "institution": {
+                          "type": "string"
+                        },
+                        "year": {
+                          "type": "integer"
+                        }
+                      }
                     }
                   },
-                  "experience": {
+                  "yearsOfExperience": {
                     "type": "integer",
                     "minimum": 0
+                  },
+                  "sessionRate": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "licenseNumber": {
+                    "type": "string"
                   },
                   "bio": {
                     "type": "string"
                   },
                   "availability": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "day": {
-                          "type": "string"
-                        },
-                        "slots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
+                    "type": "object"
                   }
                 }
               }
@@ -1268,29 +1285,14 @@
                 ],
                 "properties": {
                   "availability": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "day": {
-                          "type": "string",
-                          "enum": [
-                            "Monday",
-                            "Tuesday",
-                            "Wednesday",
-                            "Thursday",
-                            "Friday",
-                            "Saturday",
-                            "Sunday"
-                          ]
-                        },
-                        "slots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
+                    "type": "object",
+                    "example": {
+                      "monday": [
+                        {
+                          "start": "09:00",
+                          "end": "17:00"
                         }
-                      }
+                      ]
                     }
                   }
                 }
@@ -1348,12 +1350,25 @@
                   "qualifications": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "degree": {
+                          "type": "string"
+                        },
+                        "institution": {
+                          "type": "string"
+                        },
+                        "year": {
+                          "type": "integer"
+                        }
+                      }
                     },
                     "example": [
-                      "PhD in Clinical Psychology",
-                      "Licensed Therapist",
-                      "CBT Certified"
+                      {
+                        "degree": "PhD in Clinical Psychology",
+                        "institution": "Harvard University",
+                        "year": 2020
+                      }
                     ]
                   }
                 }
@@ -2054,6 +2069,632 @@
           }
         }
       }
+    },
+    "/api/v1/assessments": {
+      "post": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Submit or update assessment",
+        "description": "Submit a new mental health assessment or update an existing one. Only patients can submit assessments.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "concerns",
+                  "impactLevel"
+                ],
+                "properties": {
+                  "ageGroup": {
+                    "type": "string",
+                    "enum": [
+                      "18-24",
+                      "25-34",
+                      "35-44",
+                      "45-54",
+                      "55-64",
+                      "65+"
+                    ],
+                    "example": "25-34"
+                  },
+                  "occupation": {
+                    "type": "string",
+                    "enum": [
+                      "Student",
+                      "Employed (Full-time)",
+                      "Employed (Part-time)",
+                      "Self-employed",
+                      "Unemployed",
+                      "Retired"
+                    ],
+                    "example": "Employed (Full-time)"
+                  },
+                  "lifestyle": {
+                    "type": "string",
+                    "enum": [
+                      "High-stress, fast-paced",
+                      "Moderately busy, some downtime",
+                      "Balanced between work and personal life",
+                      "Relaxed, low-stress"
+                    ],
+                    "example": "High-stress, fast-paced"
+                  },
+                  "activityLevel": {
+                    "type": "string",
+                    "enum": [
+                      "Sedentary (little to no exercise)",
+                      "Lightly active (walking, yoga, stretching)",
+                      "Moderately active (exercise 3-4 days a week)",
+                      "Very active (intense workouts, sports, daily exercise)"
+                    ],
+                    "example": "Moderately active (exercise 3-4 days a week)"
+                  },
+                  "concerns": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Anxiety",
+                        "Depression",
+                        "Overthinking",
+                        "Stress",
+                        "Low self-esteem",
+                        "Self-improvement",
+                        "Anger issues",
+                        "Grief/loss",
+                        "Sleep disturbances",
+                        "OCD",
+                        "Sexual dysfunction",
+                        "Bipolar disorder",
+                        "Addiction",
+                        "Autism spectrum disorder",
+                        "None of the above"
+                      ]
+                    },
+                    "minItems": 1,
+                    "example": [
+                      "Anxiety",
+                      "Stress",
+                      "Overthinking"
+                    ]
+                  },
+                  "otherConcern": {
+                    "type": "string",
+                    "description": "Describe any other concern not listed above",
+                    "example": "Work-life balance issues"
+                  },
+                  "duration": {
+                    "type": "string",
+                    "enum": [
+                      "Less than a month",
+                      "1-6 months",
+                      "6 months - 1 year",
+                      "More than 1 year"
+                    ],
+                    "example": "1-6 months"
+                  },
+                  "impactLevel": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "description": "Impact level (1 = Minimal, 5 = Severe)",
+                    "example": 4
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assessment submitted/updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Only patients can submit assessments"
+          }
+        }
+      }
+    },
+    "/api/v1/assessments/me": {
+      "get": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Get own assessment",
+        "description": "Retrieve the logged-in patient's assessment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "404": {
+            "description": "Assessment not found"
+          }
+        }
+      }
+    },
+    "/api/v1/assessments/recommendations": {
+      "get": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Get recommended therapists",
+        "description": "Get personalized therapist recommendations based on assessment answers. Uses an intelligent scoring algorithm that matches patient concerns with therapist specializations, experience, ratings, and availability.",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of recommendations (max: 20)",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 20
+            }
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "description": "Minimum average rating (0-5)",
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            }
+          },
+          {
+            "name": "maxRate",
+            "in": "query",
+            "description": "Maximum session rate",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "verifiedOnly",
+            "in": "query",
+            "description": "Only show verified therapists",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recommendations generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "recommendations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "therapist": {
+                                "$ref": "#/components/schemas/Therapist"
+                              },
+                              "matchScore": {
+                                "type": "number",
+                                "description": "Score out of 100 based on compatibility",
+                                "example": 87.5
+                              },
+                              "matchPercentage": {
+                                "type": "integer",
+                                "description": "Match percentage",
+                                "example": 88
+                              },
+                              "matchReasons": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "example": [
+                                  "Specializes in: Anxiety, Stress",
+                                  "Experienced (8 years)",
+                                  "Excellent rating (4.7/5)",
+                                  "Verified therapist"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "totalFound": {
+                          "type": "integer",
+                          "example": 15
+                        },
+                        "assessmentSummary": {
+                          "type": "object",
+                          "properties": {
+                            "concerns": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "example": [
+                                "Anxiety",
+                                "Stress"
+                              ]
+                            },
+                            "impactLevel": {
+                              "type": "integer",
+                              "example": 4
+                            },
+                            "duration": {
+                              "type": "string",
+                              "example": "3-6 months"
+                            },
+                            "lifestyle": {
+                              "type": "string",
+                              "example": "High-stress, fast-paced"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Therapist recommendations generated successfully"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Only patients can get recommendations"
+          },
+          "404": {
+            "description": "Assessment not found - Please complete assessment first"
+          }
+        }
+      }
+    },
+    "/api/v1/assessments/patient/{patientId}": {
+      "get": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Get assessment by patient ID",
+        "description": "Therapists and supervisors can view a specific patient's assessment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "patientId",
+            "in": "path",
+            "required": true,
+            "description": "Patient's user ID",
+            "schema": {
+              "type": "string",
+              "example": "60d5ec49f1b2c72b8c8e4f1a"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Only therapists and supervisors can view patient assessments"
+          },
+          "404": {
+            "description": "Assessment not found"
+          }
+        }
+      }
+    },
+    "/api/v1/assessments/all": {
+      "get": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Get all assessments (Supervisor only)",
+        "description": "Supervisors can view all assessments with pagination",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Items per page (max: 50)",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessments fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "assessments": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Assessment"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object",
+                          "properties": {
+                            "currentPage": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "totalPages": {
+                              "type": "integer",
+                              "example": 5
+                            },
+                            "totalAssessments": {
+                              "type": "integer",
+                              "example": 48
+                            },
+                            "hasMore": {
+                              "type": "boolean",
+                              "example": true
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Assessments fetched successfully"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Only supervisors can view all assessments"
+          }
+        }
+      }
+    },
+    "/api/v1/assessments/statistics": {
+      "get": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Get assessment statistics (Supervisor only)",
+        "description": "Get aggregated statistics about all assessments including concern distribution, impact levels, and duration",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistics fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statusCode": {
+                      "type": "integer",
+                      "example": 200
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "totalAssessments": {
+                          "type": "integer",
+                          "example": 48
+                        },
+                        "concernDistribution": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "_id": {
+                                "type": "string",
+                                "example": "Anxiety"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "example": 32
+                              }
+                            }
+                          }
+                        },
+                        "impactLevelDistribution": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "_id": {
+                                "type": "integer",
+                                "example": 4
+                              },
+                              "count": {
+                                "type": "integer",
+                                "example": 15
+                              }
+                            }
+                          }
+                        },
+                        "durationDistribution": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "_id": {
+                                "type": "string",
+                                "example": "3-6 months"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "example": 18
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Assessment statistics fetched successfully"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Only supervisors can view statistics"
+          }
+        }
+      }
+    },
+    "/api/v1/assessments/{id}": {
+      "delete": {
+        "tags": [
+          "Assessments"
+        ],
+        "summary": "Delete assessment",
+        "description": "Patients can delete their own assessment, supervisors can delete any assessment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Assessment ID",
+            "schema": {
+              "type": "string",
+              "example": "60d5ec49f1b2c72b8c8e4f1a"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assessment deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - You can only delete your own assessment"
+          },
+          "404": {
+            "description": "Assessment not found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2158,42 +2799,57 @@
               "qualifications": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "type": "object",
+                  "properties": {
+                    "degree": {
+                      "type": "string"
+                    },
+                    "institution": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "integer"
+                    }
+                  }
                 },
                 "example": [
-                  "PhD in Clinical Psychology",
-                  "Licensed Therapist"
+                  {
+                    "degree": "PhD in Clinical Psychology",
+                    "institution": "Harvard University",
+                    "year": 2020
+                  }
                 ]
               },
-              "experience": {
+              "yearsOfExperience": {
                 "type": "integer",
                 "example": 5,
                 "description": "Years of experience"
+              },
+              "sessionRate": {
+                "type": "number",
+                "example": 1500
+              },
+              "licenseNumber": {
+                "type": "string",
+                "example": "TH123456"
+              },
+              "isStudent": {
+                "type": "boolean",
+                "example": false
               },
               "bio": {
                 "type": "string",
                 "example": "Experienced therapist specializing in CBT..."
               },
               "availability": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "day": {
-                      "type": "string",
-                      "example": "Monday"
-                    },
-                    "slots": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "example": [
-                        "09:00-10:00",
-                        "14:00-15:00"
-                      ]
+                "type": "object",
+                "example": {
+                  "monday": [
+                    {
+                      "start": "09:00",
+                      "end": "17:00"
                     }
-                  }
+                  ]
                 }
               }
             }
@@ -2263,6 +2919,106 @@
           "createdAt",
           "updatedAt"
         ]
+      },
+      "Assessment": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "60d5ec49f1b2c72b8c8e4f1a"
+          },
+          "patientId": {
+            "type": "object",
+            "properties": {
+              "_id": {
+                "type": "string",
+                "example": "60d5ec49f1b2c72b8c8e4f1b"
+              },
+              "fullName": {
+                "type": "string",
+                "example": "John Doe"
+              },
+              "email": {
+                "type": "string",
+                "example": "john@example.com"
+              }
+            }
+          },
+          "answers": {
+            "type": "object",
+            "properties": {
+              "ageGroup": {
+                "type": "string",
+                "example": "25-34"
+              },
+              "occupation": {
+                "type": "string",
+                "example": "Employed (Full-time)"
+              },
+              "lifestyle": {
+                "type": "string",
+                "example": "High-stress, fast-paced"
+              },
+              "activityLevel": {
+                "type": "string",
+                "example": "Moderately active (exercise 3-4 days a week)"
+              },
+              "concerns": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "Anxiety",
+                  "Stress",
+                  "Overthinking"
+                ]
+              },
+              "otherConcern": {
+                "type": "string",
+                "example": "Work-life balance"
+              },
+              "duration": {
+                "type": "string",
+                "example": "1-6 months"
+              },
+              "impactLevel": {
+                "type": "integer",
+                "example": 4
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        }
+      },
+      "AssessmentResponse": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 200
+          },
+          "data": {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          "message": {
+            "type": "string",
+            "example": "Assessment fetched successfully"
+          },
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
       }
     },
     "securitySchemes": {

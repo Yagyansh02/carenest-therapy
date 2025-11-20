@@ -25,38 +25,49 @@
                   "qualifications": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "degree": { "type": "string" },
+                        "institution": { "type": "string" },
+                        "year": { "type": "integer" }
+                      }
                     },
-                    "example": ["PhD in Clinical Psychology", "Licensed Therapist"]
+                    "example": [
+                      {
+                        "degree": "PhD in Clinical Psychology",
+                        "institution": "Harvard University",
+                        "year": 2020
+                      }
+                    ]
                   },
-                  "experience": {
+                  "yearsOfExperience": {
                     "type": "integer",
                     "minimum": 0,
                     "example": 5,
                     "description": "Years of experience"
+                  },
+                  "sessionRate": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 1500
+                  },
+                  "licenseNumber": {
+                    "type": "string",
+                    "example": "TH123456"
+                  },
+                  "isStudent": {
+                    "type": "boolean",
+                    "default": false
                   },
                   "bio": {
                     "type": "string",
                     "example": "Experienced therapist specializing in cognitive behavioral therapy..."
                   },
                   "availability": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "day": {
-                          "type": "string",
-                          "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-                          "example": "Monday"
-                        },
-                        "slots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "example": ["09:00-10:00", "14:00-15:00"]
-                        }
-                      }
+                    "type": "object",
+                    "example": {
+                      "monday": [{ "start": "09:00", "end": "17:00" }],
+                      "wednesday": [{ "start": "10:00", "end": "14:00" }]
                     }
                   }
                 }
@@ -136,32 +147,30 @@
                   "qualifications": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "degree": { "type": "string" },
+                        "institution": { "type": "string" },
+                        "year": { "type": "integer" }
+                      }
                     }
                   },
-                  "experience": {
+                  "yearsOfExperience": {
                     "type": "integer",
                     "minimum": 0
+                  },
+                  "sessionRate": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "licenseNumber": {
+                    "type": "string"
                   },
                   "bio": {
                     "type": "string"
                   },
                   "availability": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "day": {
-                          "type": "string"
-                        },
-                        "slots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
+                    "type": "object"
                   }
                 }
               }
@@ -360,21 +369,9 @@
                 "required": ["availability"],
                 "properties": {
                   "availability": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "day": {
-                          "type": "string",
-                          "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                        },
-                        "slots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
-                      }
+                    "type": "object",
+                    "example": {
+                      "monday": [{ "start": "09:00", "end": "17:00" }]
                     }
                   }
                 }
@@ -420,9 +417,20 @@
                   "qualifications": {
                     "type": "array",
                     "items": {
-                      "type": "string"
+                      "type": "object",
+                      "properties": {
+                        "degree": { "type": "string" },
+                        "institution": { "type": "string" },
+                        "year": { "type": "integer" }
+                      }
                     },
-                    "example": ["PhD in Clinical Psychology", "Licensed Therapist", "CBT Certified"]
+                    "example": [
+                      {
+                        "degree": "PhD in Clinical Psychology",
+                        "institution": "Harvard University",
+                        "year": 2020
+                      }
+                    ]
                   }
                 }
               }
@@ -515,36 +523,46 @@
               "qualifications": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "type": "object",
+                  "properties": {
+                    "degree": { "type": "string" },
+                    "institution": { "type": "string" },
+                    "year": { "type": "integer" }
+                  }
                 },
-                "example": ["PhD in Clinical Psychology", "Licensed Therapist"]
+                "example": [
+                  {
+                    "degree": "PhD in Clinical Psychology",
+                    "institution": "Harvard University",
+                    "year": 2020
+                  }
+                ]
               },
-              "experience": {
+              "yearsOfExperience": {
                 "type": "integer",
                 "example": 5,
                 "description": "Years of experience"
+              },
+              "sessionRate": {
+                "type": "number",
+                "example": 1500
+              },
+              "licenseNumber": {
+                "type": "string",
+                "example": "TH123456"
+              },
+              "isStudent": {
+                "type": "boolean",
+                "example": false
               },
               "bio": {
                 "type": "string",
                 "example": "Experienced therapist specializing in CBT..."
               },
               "availability": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "day": {
-                      "type": "string",
-                      "example": "Monday"
-                    },
-                    "slots": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "example": ["09:00-10:00", "14:00-15:00"]
-                    }
-                  }
+                "type": "object",
+                "example": {
+                  "monday": [{ "start": "09:00", "end": "17:00" }]
                 }
               }
             }

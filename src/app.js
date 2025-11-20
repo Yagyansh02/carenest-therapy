@@ -29,12 +29,14 @@ app.get("/health", (req, res) => {
 import userRouter from './routes/user.routes.js';
 import therapistRouter from './routes/therapist.routes.js';
 import supervisorRouter from './routes/supervisor.routes.js';
+import assessmentRouter from './routes/assessment.routes.js';
 import docsRouter from './routes/docs.routes.js';
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/therapists", therapistRouter);
 app.use("/api/v1/supervisors", supervisorRouter);
+app.use("/api/v1/assessments", assessmentRouter);
 
 // API Documentation route (Scalar)
 app.use("/docs", docsRouter);
