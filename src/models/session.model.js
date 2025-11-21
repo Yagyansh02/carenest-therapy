@@ -48,11 +48,10 @@ const sessionSchema = new Schema(
       index: true,
     },
     /**
-     * Session type
+     * Session type (only video sessions supported)
      */
     sessionType: {
       type: String,
-      enum: ["video", "audio", "chat", "in-person"],
       default: "video",
     },
 

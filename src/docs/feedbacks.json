@@ -1,0 +1,1009 @@
+{
+  "paths": {
+    "/api/v1/feedbacks": {
+      "post": {
+        "tags": ["Feedbacks"],
+        "summary": "Create feedback",
+        "description": "Create feedback in the 360-degree system: patient-to-therapist (session review), therapist-to-patient (progress feedback), or supervisor-to-therapist (performance review).",
+        "operationId": "createFeedback",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["feedbackType", "toUserId", "overallRating"],
+                "properties": {
+                  "feedbackType": {
+                    "type": "string",
+                    "enum": ["patient-to-therapist", "therapist-to-patient", "supervisor-to-therapist"],
+                    "example": "patient-to-therapist",
+                    "description": "Type of feedback in the 360-degree system"
+                  },
+                  "toUserId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "example": "507f1f77bcf86cd799439012",
+                    "description": "User receiving the feedback"
+                  },
+                  "sessionId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "example": "507f1f77bcf86cd799439013",
+                    "description": "Related session (required for patient-to-therapist and therapist-to-patient feedback)"
+                  },
+                  "overallRating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "example": 5,
+                    "description": "Overall rating (1-5 scale)"
+                  },
+                  "categoryRatings": {
+                    "type": "object",
+                    "description": "Detailed ratings by category. Available categories depend on feedback type.",
+                    "properties": {
+                      "professionalism": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For patient-to-therapist feedback"
+                      },
+                      "communication": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For patient-to-therapist feedback"
+                      },
+                      "effectiveness": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For patient-to-therapist feedback"
+                      },
+                      "empathy": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For patient-to-therapist feedback"
+                      },
+                      "engagement": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For therapist-to-patient feedback"
+                      },
+                      "progress": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For therapist-to-patient feedback"
+                      },
+                      "homework_completion": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For therapist-to-patient feedback"
+                      },
+                      "openness": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For therapist-to-patient feedback"
+                      },
+                      "clinical_skills": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For supervisor-to-therapist feedback"
+                      },
+                      "documentation": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For supervisor-to-therapist feedback"
+                      },
+                      "ethical_practice": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For supervisor-to-therapist feedback"
+                      },
+                      "professional_development": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5,
+                        "description": "For supervisor-to-therapist feedback"
+                      }
+                    }
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "example": "Excellent session, very helpful and empathetic.",
+                    "description": "Detailed feedback comment"
+                  },
+                  "strengths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["Active listening", "Clear explanations"],
+                    "description": "Areas of strength (primarily for supervisor feedback)"
+                  },
+                  "areasForImprovement": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "example": ["Time management", "Documentation detail"],
+                    "description": "Areas for improvement (primarily for supervisor feedback)"
+                  },
+                  "recommendations": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Continue building rapport and consider incorporating more CBT techniques.",
+                    "description": "Recommendations or action items"
+                  },
+                  "isAnonymous": {
+                    "type": "boolean",
+                    "default": false,
+                    "example": false,
+                    "description": "Whether feedback is anonymous (only for patient-to-therapist)"
+                  },
+                  "reviewPeriod": {
+                    "type": "string",
+                    "example": "Q4 2024",
+                    "description": "Review period (for supervisor feedback)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Feedback created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Feedback" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid input or missing required fields",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User not authorized to give this type of feedback",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Session or user not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "409": {
+            "description": "Feedback already exists for this session",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Feedbacks"],
+        "summary": "Get all feedbacks",
+        "description": "Get all feedbacks with role-based filtering. Patients and therapists see their own feedback, supervisors see therapist feedback, admins see all.",
+        "operationId": "getAllFeedbacks",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "feedbackType",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["patient-to-therapist", "therapist-to-patient", "supervisor-to-therapist"]
+            },
+            "description": "Filter by feedback type"
+          },
+          {
+            "name": "fromUserId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Filter by feedback giver (admin only)"
+          },
+          {
+            "name": "toUserId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Filter by feedback receiver (admin only)"
+          },
+          {
+            "name": "sessionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Filter by session"
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "description": "Minimum overall rating"
+          },
+          {
+            "name": "maxRating",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5
+            },
+            "description": "Maximum overall rating"
+          },
+          {
+            "name": "isVisible",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by visibility status"
+          },
+          {
+            "name": "isFlagged",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Filter by flagged status"
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Filter feedbacks created after this date"
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Filter feedbacks created before this date"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "-createdAt"
+            },
+            "description": "Sort field (prefix with - for descending)"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feedbacks retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "feedbacks": {
+                              "type": "array",
+                              "items": { "$ref": "#/components/schemas/Feedback" }
+                            },
+                            "pagination": {
+                              "$ref": "#/components/schemas/Pagination"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedbacks/{id}": {
+      "get": {
+        "tags": ["Feedbacks"],
+        "summary": "Get feedback by ID",
+        "description": "Get detailed information about a specific feedback. Only accessible by the giver, receiver, or admin.",
+        "operationId": "getFeedbackById",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Feedback ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feedback retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Feedback" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Not authorized to view this feedback",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Feedback not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Feedbacks"],
+        "summary": "Update feedback",
+        "description": "Update feedback content. Only the creator can update their own feedback.",
+        "operationId": "updateFeedback",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Feedback ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "overallRating": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "example": 4
+                  },
+                  "categoryRatings": {
+                    "type": "object",
+                    "description": "Updated category ratings"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "strengths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "areasForImprovement": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "recommendations": {
+                    "type": "string",
+                    "maxLength": 1000
+                  },
+                  "isVisible": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Feedback" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Can only update your own feedback",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Feedback not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Feedbacks"],
+        "summary": "Delete feedback",
+        "description": "Delete feedback. Only the creator or admin can delete feedback.",
+        "operationId": "deleteFeedback",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Feedback ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feedback deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiResponse" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Not authorized to delete this feedback",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Feedback not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedbacks/{id}/response": {
+      "post": {
+        "tags": ["Feedbacks"],
+        "summary": "Add response to feedback",
+        "description": "Add a response to received feedback. Only the feedback recipient can respond.",
+        "operationId": "addResponseToFeedback",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Feedback ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["responseText"],
+                "properties": {
+                  "responseText": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "example": "Thank you for your feedback. I'll work on improving my documentation.",
+                    "description": "Response to the feedback"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Feedback" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only the feedback recipient can respond",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Feedback not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedbacks/{id}/flag": {
+      "post": {
+        "tags": ["Feedbacks"],
+        "summary": "Flag feedback (Admin only)",
+        "description": "Flag or unflag inappropriate feedback. Admin only.",
+        "operationId": "flagFeedback",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Feedback ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isFlagged": {
+                    "type": "boolean",
+                    "default": true,
+                    "example": true,
+                    "description": "Flag status"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback flag status updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Feedback" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only admins can flag feedback",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Feedback not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedbacks/stats/{userId}": {
+      "get": {
+        "tags": ["Feedbacks"],
+        "summary": "Get feedback statistics",
+        "description": "Get comprehensive feedback statistics for a user. Users can view their own stats, admins can view any user's stats.",
+        "operationId": "getFeedbackStats",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "User ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feedback statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "userId": {
+                              "type": "string",
+                              "format": "objectId"
+                            },
+                            "userName": {
+                              "type": "string"
+                            },
+                            "userRole": {
+                              "type": "string"
+                            },
+                            "totalFeedbackReceived": {
+                              "type": "integer"
+                            },
+                            "averageRating": {
+                              "type": "number",
+                              "format": "float"
+                            },
+                            "ratingDistribution": {
+                              "type": "object",
+                              "properties": {
+                                "1": { "type": "integer" },
+                                "2": { "type": "integer" },
+                                "3": { "type": "integer" },
+                                "4": { "type": "integer" },
+                                "5": { "type": "integer" }
+                              }
+                            },
+                            "categoryAverages": {
+                              "type": "object",
+                              "description": "Average ratings for each applicable category"
+                            },
+                            "feedbackByType": {
+                              "type": "object",
+                              "properties": {
+                                "patient-to-therapist": { "type": "integer" },
+                                "therapist-to-patient": { "type": "integer" },
+                                "supervisor-to-therapist": { "type": "integer" }
+                              }
+                            },
+                            "recentFeedback": {
+                              "type": "array",
+                              "items": { "$ref": "#/components/schemas/Feedback" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Can only view your own statistics",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/feedbacks/therapist/{therapistId}/rating": {
+      "get": {
+        "tags": ["Feedbacks"],
+        "summary": "Get therapist's average rating (Public)",
+        "description": "Get a therapist's average rating and total feedback count. Public endpoint for matching/search functionality.",
+        "operationId": "getTherapistRating",
+        "parameters": [
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "objectId"
+            },
+            "description": "Therapist user ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Therapist rating retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapistId": {
+                              "type": "string",
+                              "format": "objectId"
+                            },
+                            "totalFeedbacks": {
+                              "type": "integer",
+                              "example": 42
+                            },
+                            "averageRating": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 4.65
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Feedback": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "feedbackType": {
+            "type": "string",
+            "enum": ["patient-to-therapist", "therapist-to-patient", "supervisor-to-therapist"],
+            "example": "patient-to-therapist"
+          },
+          "fromUser": {
+            "type": "object",
+            "properties": {
+              "_id": { "type": "string", "format": "objectId" },
+              "fullName": { "type": "string" },
+              "email": { "type": "string" },
+              "role": { "type": "string" }
+            }
+          },
+          "toUser": {
+            "type": "object",
+            "properties": {
+              "_id": { "type": "string", "format": "objectId" },
+              "fullName": { "type": "string" },
+              "email": { "type": "string" },
+              "role": { "type": "string" }
+            }
+          },
+          "sessionId": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "_id": { "type": "string", "format": "objectId" },
+              "scheduledAt": { "type": "string", "format": "date-time" },
+              "duration": { "type": "integer" },
+              "status": { "type": "string" }
+            }
+          },
+          "overallRating": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 5
+          },
+          "categoryRatings": {
+            "type": "object",
+            "description": "Category-specific ratings based on feedback type"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "example": "Excellent therapist, very professional and helpful."
+          },
+          "strengths": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "areasForImprovement": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "recommendations": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAnonymous": {
+            "type": "boolean",
+            "example": false
+          },
+          "isVisible": {
+            "type": "boolean",
+            "example": true
+          },
+          "isFlagged": {
+            "type": "boolean",
+            "example": false
+          },
+          "response": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "text": { "type": "string" },
+              "respondedAt": { "type": "string", "format": "date-time" }
+            }
+          },
+          "reviewPeriod": {
+            "type": "string",
+            "nullable": true,
+            "example": "Q4 2024"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
