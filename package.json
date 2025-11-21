@@ -4,7 +4,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
+    "docs:consolidate": "node src/docs/consolidate-docs.js",
+    "docs:watch": "nodemon --watch src/docs/*.json --exec npm run docs:consolidate"
   },
   "keywords": [
     "therapy",
@@ -26,6 +28,7 @@
     "prettier": "^3.6.2"
   },
   "dependencies": {
+    "@scalar/express-api-reference": "^0.8.24",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.7.0",
     "cookie-parser": "^1.4.7",

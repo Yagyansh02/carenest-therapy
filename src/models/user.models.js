@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 /**
  * User schema defines the structure of user documents in MongoDB.
@@ -36,7 +37,7 @@ const userSchema = new Schema(
         // Role controls access/permissions within the system
         role: {
             type: String,
-            enum: ["patient", "therapist", "supervisor"],
+            enum: ["patient", "therapist", "supervisor","admin"],
             default: "patient",
         },
 
@@ -67,6 +68,40 @@ userSchema.pre("save", async function (next) {
  */
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
+};
+
+/**
+ * Instance method to generate JWT access token.
+ * Contains user identification and basic info for authorization.
+ */
+userSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            fullName: this.fullName,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+        }
+    );
+};
+
+/**
+ * Instance method to generate JWT refresh token.
+ * Contains only user ID for refreshing access tokens.
+ */
+userSchema.methods.generateRefreshToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+        }
+    );
 };
 
 // Export the model for use elsewhere in the application

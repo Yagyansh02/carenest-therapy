@@ -1,5 +1,11 @@
 import { Router } from "express";
 import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  getCurrentUser,
+  changePassword,
   getAllUsers,
   getUserById,
   updateUserProfile,
@@ -8,16 +14,22 @@ import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// All routes require authentication
+// Public routes
+router.route("/register").post(registerUser);
+router.route("/login").post(loginUser);
+router.route("/refresh-token").post(refreshAccessToken);
+
+// Protected routes - require authentication
 router.use(verifyJWT);
 
-// Get all users (supervisor only)
-router.route("/").get(verifyRole("supervisor"), getAllUsers);
+// Auth related
+router.route("/logout").post(logoutUser);
+router.route("/me").get(getCurrentUser);
+router.route("/change-password").post(changePassword);
 
-// Update current user's profile
+// User management
+router.route("/").get(getAllUsers);
 router.route("/profile").patch(updateUserProfile);
-
-// Get user by ID
 router.route("/:id").get(getUserById);
 
 export default router;
