@@ -124,7 +124,8 @@
                     "enum": [
                       "patient",
                       "therapist",
-                      "supervisor"
+                      "supervisor",
+                      "admin"
                     ],
                     "default": "patient",
                     "example": "patient",
@@ -561,7 +562,7 @@
           "Users"
         ],
         "summary": "Get all users",
-        "description": "Retrieve a list of all users in the system (admin/supervisor only)",
+        "description": "Retrieve a list of all users in the system (admin only)",
         "operationId": "getAllUsers",
         "security": [
           {
@@ -578,7 +579,8 @@
               "enum": [
                 "patient",
                 "therapist",
-                "supervisor"
+                "supervisor",
+                "admin"
               ]
             }
           },
@@ -2445,7 +2447,7 @@
             "description": "Unauthorized - Invalid or missing token"
           },
           "403": {
-            "description": "Forbidden - Only therapists and supervisors can view patient assessments"
+            "description": "Forbidden - Only therapists and admins can view patient assessments"
           },
           "404": {
             "description": "Assessment not found"
@@ -2458,8 +2460,8 @@
         "tags": [
           "Assessments"
         ],
-        "summary": "Get all assessments (Supervisor only)",
-        "description": "Supervisors can view all assessments with pagination",
+        "summary": "Get all assessments (Admin only)",
+        "description": "Admins can view all assessments with pagination",
         "security": [
           {
             "BearerAuth": []
@@ -2548,7 +2550,7 @@
             "description": "Unauthorized - Invalid or missing token"
           },
           "403": {
-            "description": "Forbidden - Only supervisors can view all assessments"
+            "description": "Forbidden - Only admins can view all assessments"
           }
         }
       }
@@ -2558,7 +2560,7 @@
         "tags": [
           "Assessments"
         ],
-        "summary": "Get assessment statistics (Supervisor only)",
+        "summary": "Get assessment statistics (Admin only)",
         "description": "Get aggregated statistics about all assessments including concern distribution, impact levels, and duration",
         "security": [
           {
@@ -2651,7 +2653,7 @@
             "description": "Unauthorized - Invalid or missing token"
           },
           "403": {
-            "description": "Forbidden - Only supervisors can view statistics"
+            "description": "Forbidden - Only admins can view statistics"
           }
         }
       }
@@ -2720,7 +2722,8 @@
             "enum": [
               "patient",
               "therapist",
-              "supervisor"
+              "supervisor",
+              "admin"
             ],
             "example": "patient"
           },

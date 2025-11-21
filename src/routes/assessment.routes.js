@@ -8,7 +8,7 @@ import {
   getRecommendedTherapists,
   getAssessmentStatistics,
 } from "../controllers/assessment.controllers.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -20,12 +20,12 @@ router.route("/").post(submitAssessment); // Submit or update assessment
 router.route("/me").get(getMyAssessment); // Get own assessment
 router.route("/recommendations").get(getRecommendedTherapists); // Get recommended therapists
 
-// Therapist/Supervisor routes
+// Therapist/Admin routes
 router.route("/patient/:patientId").get(getAssessmentByPatientId); // Get assessment by patient ID
 
-// Supervisor only routes
-router.route("/all").get(getAllAssessments); // Get all assessments (paginated)
-router.route("/statistics").get(getAssessmentStatistics); // Get assessment statistics
+// Admin only routes
+router.route("/all").get(verifyRole("admin"), getAllAssessments); // Get all assessments (paginated)
+router.route("/statistics").get(verifyRole("admin"), getAssessmentStatistics); // Get assessment statistics
 
 // Delete route (Patient can delete own, Supervisor can delete any)
 router.route("/:id").delete(deleteAssessment);

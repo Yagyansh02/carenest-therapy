@@ -113,7 +113,7 @@ carenest-therapy/
 - `POST /api/v1/users/refresh-token` - Refresh access token
 - `GET /api/v1/users/me` - Get current user
 - `POST /api/v1/users/change-password` - Change password
-- `GET /api/v1/users` - Get all users (Supervisor only)
+- `GET /api/v1/users` - Get all users (Admin only)
 - `GET /api/v1/users/:id` - Get user by ID
 - `PATCH /api/v1/users/profile` - Update profile
 
@@ -141,8 +141,8 @@ carenest-therapy/
 - `GET /api/v1/assessments/me` - Get own assessment (Patient only)
 - `GET /api/v1/assessments/recommendations` - Get recommended therapists (Patient only)
 - `GET /api/v1/assessments/patient/:patientId` - Get assessment by patient ID (Therapist/Supervisor)
-- `GET /api/v1/assessments/all` - Get all assessments (Supervisor only)
-- `GET /api/v1/assessments/statistics` - Get assessment statistics (Supervisor only)
+- `GET /api/v1/assessments/all` - Get all assessments (Admin only)
+- `GET /api/v1/assessments/statistics` - Get assessment statistics (Admin only)
 - `DELETE /api/v1/assessments/:id` - Delete assessment
 
 **Total: 28 endpoints across 4 modules**
@@ -153,7 +153,8 @@ carenest-therapy/
 
 - **Patient** - Submit assessments, get therapist recommendations, book sessions, provide feedback
 - **Therapist** - Conduct sessions, manage patient notes, view patient assessments, receive feedback
-- **Supervisor** - Oversee therapists, view all data, manage users, view assessment statistics
+- **Supervisor** - Oversee therapists, verify student therapists, manage mentorship
+- **Admin** - View all data, manage users, view assessment statistics
 - **Admin** - Full system access and management capabilities
 
 ## 🔒 Security Features

@@ -250,14 +250,14 @@ curl -X GET "http://localhost:5000/api/v1/assessments/recommendations?limit=10&m
 
 ---
 
-## 4. Get Assessment by Patient ID (Therapist/Supervisor)
+## 4. Get Assessment by Patient ID (Therapist/Admin)
 
-Therapists and supervisors can view a specific patient's assessment.
+Therapists and admins can view a specific patient's assessment.
 
 ### Request
 ```http
 GET /api/v1/assessments/patient/:patientId
-Authorization: Bearer <therapist_or_supervisor_token>
+Authorization: Bearer <therapist_or_admin_token>
 ```
 
 ### cURL Example
@@ -297,14 +297,14 @@ curl -X GET http://localhost:5000/api/v1/assessments/patient/60d5ec49f1b2c72b8c8
 
 ---
 
-## 5. Get All Assessments (Supervisor Only)
+## 5. Get All Assessments (Admin Only)
 
-Supervisors can view all assessments with pagination.
+Admins can view all assessments with pagination.
 
 ### Request
 ```http
 GET /api/v1/assessments/all?page=1&limit=10
-Authorization: Bearer <supervisor_token>
+Authorization: Bearer <admin_token>
 ```
 
 ### Query Parameters
@@ -314,7 +314,7 @@ Authorization: Bearer <supervisor_token>
 ### cURL Example
 ```bash
 curl -X GET "http://localhost:5000/api/v1/assessments/all?page=1&limit=10" \
-  -H "Authorization: Bearer SUPERVISOR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
 ```
 
 ### Response (200 OK)
@@ -351,20 +351,20 @@ curl -X GET "http://localhost:5000/api/v1/assessments/all?page=1&limit=10" \
 
 ---
 
-## 6. Get Assessment Statistics (Supervisor Only)
+## 6. Get Assessment Statistics (Admin Only)
 
 Get aggregated statistics about all assessments.
 
 ### Request
 ```http
 GET /api/v1/assessments/statistics
-Authorization: Bearer <supervisor_token>
+Authorization: Bearer <admin_token>
 ```
 
 ### cURL Example
 ```bash
 curl -X GET http://localhost:5000/api/v1/assessments/statistics \
-  -H "Authorization: Bearer SUPERVISOR_ACCESS_TOKEN"
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
 ```
 
 ### Response (200 OK)
@@ -402,7 +402,7 @@ curl -X GET http://localhost:5000/api/v1/assessments/statistics \
 
 ## 7. Delete Assessment
 
-Patients can delete their own assessment, supervisors can delete any assessment.
+Patients can delete their own assessment, admins can delete any assessment.
 
 ### Request
 ```http

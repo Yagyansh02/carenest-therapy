@@ -112,14 +112,14 @@ const getMyAssessment = asyncHandler(async (req, res) => {
 /**
  * Get assessment by patient ID
  * @route GET /api/v1/assessments/:patientId
- * @access Private (Therapist/Supervisor only)
+ * @access Private (Therapist/Admin only)
  */
 const getAssessmentByPatientId = asyncHandler(async (req, res) => {
   const { patientId } = req.params;
 
   // Check authorization
-  if (!["therapist", "supervisor"].includes(req.user.role)) {
-    throw new ApiError(403, "Only therapists and supervisors can view patient assessments");
+  if (!["therapist", "admin"].includes(req.user.role)) {
+    throw new ApiError(403, "Only therapists and admins can view patient assessments");
   }
 
   const assessment = await Assessment.findOne({ patientId }).populate(
@@ -139,12 +139,12 @@ const getAssessmentByPatientId = asyncHandler(async (req, res) => {
 /**
  * Get all assessments
  * @route GET /api/v1/assessments
- * @access Private (Supervisor only)
+ * @access Private (Admin only)
  */
 const getAllAssessments = asyncHandler(async (req, res) => {
-  // Check if user is supervisor
-  if (req.user.role !== "supervisor") {
-    throw new ApiError(403, "Only supervisors can view all assessments");
+  // Check if user is admin
+  if (req.user.role !== "admin") {
+    throw new ApiError(403, "Only admins can view all assessments");
   }
 
   const { page = 1, limit = 10 } = req.query;
@@ -194,7 +194,7 @@ const deleteAssessment = asyncHandler(async (req, res) => {
 
   // Check authorization
   if (
-    req.user.role !== "supervisor" &&
+    req.user.role !== "admin" &&
     assessment.patientId.toString() !== req.user._id.toString()
   ) {
     throw new ApiError(403, "You can only delete your own assessment");
@@ -509,13 +509,13 @@ const getRecommendedTherapists = asyncHandler(async (req, res) => {
 });
 
 /**
- * Get assessment statistics (for supervisors)
+ * Get assessment statistics (for admins)
  * @route GET /api/v1/assessments/statistics
- * @access Private (Supervisor only)
+ * @access Private (Admin only)
  */
 const getAssessmentStatistics = asyncHandler(async (req, res) => {
-  if (req.user.role !== "supervisor") {
-    throw new ApiError(403, "Only supervisors can view assessment statistics");
+  if (req.user.role !== "admin") {
+    throw new ApiError(403, "Only admins can view assessment statistics");
   }
 
   const totalAssessments = await Assessment.countDocuments();

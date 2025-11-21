@@ -300,7 +300,7 @@ const changePassword = asyncHandler(async (req, res) => {
 /**
  * Get all users (admin functionality)
  * @route GET /api/v1/users
- * @access Private (requires authentication and supervisor role)
+ * @access Private (requires authentication and admin role)
  */
 const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select("-password -refreshToken");

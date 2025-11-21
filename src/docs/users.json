@@ -36,7 +36,7 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": ["patient", "therapist", "supervisor"],
+                    "enum": ["patient", "therapist", "supervisor", "admin"],
                     "default": "patient",
                     "example": "patient",
                     "description": "User role in the system"
@@ -412,7 +412,7 @@
       "get": {
         "tags": ["Users"],
         "summary": "Get all users",
-        "description": "Retrieve a list of all users in the system (admin/supervisor only)",
+        "description": "Retrieve a list of all users in the system (admin only)",
         "operationId": "getAllUsers",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
@@ -422,7 +422,7 @@
             "description": "Filter users by role",
             "schema": {
               "type": "string",
-              "enum": ["patient", "therapist", "supervisor"]
+              "enum": ["patient", "therapist", "supervisor", "admin"]
             }
           },
           {

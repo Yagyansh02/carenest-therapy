@@ -28,7 +28,7 @@ router.route("/me").get(getCurrentUser);
 router.route("/change-password").post(changePassword);
 
 // User management
-router.route("/").get(getAllUsers);
+router.route("/").get(verifyRole("admin"), getAllUsers);
 router.route("/profile").patch(updateUserProfile);
 router.route("/:id").get(getUserById);
 

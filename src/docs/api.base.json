@@ -98,7 +98,7 @@
           },
           "role": {
             "type": "string",
-            "enum": ["patient", "therapist", "supervisor"],
+            "enum": ["patient", "therapist", "supervisor", "admin"],
             "example": "patient"
           },
           "createdAt": {

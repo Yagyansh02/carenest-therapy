@@ -396,7 +396,7 @@ const updateSpecializations = asyncHandler(async (req, res) => {
 /**
  * Get students under supervisor
  * @route GET /api/v1/therapists/students
- * @access Private (Supervisor only)
+ * @access Private (Supervisor or Admin)
  */
 const getStudentsUnderSupervisor = asyncHandler(async (req, res) => {
   // Find all student therapists under this supervisor
@@ -421,7 +421,7 @@ const getStudentsUnderSupervisor = asyncHandler(async (req, res) => {
 /**
  * Verify therapist profile
  * @route PUT /api/v1/therapists/verify/:id
- * @access Private (Supervisor only)
+ * @access Private (Supervisor or Admin)
  */
 const verifyTherapist = asyncHandler(async (req, res) => {
   const { id } = req.params;
