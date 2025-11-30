@@ -28,6 +28,8 @@ const FEATURE_FILES = [
   'therapists.json',
   'supervisors.json',
   'assessments.json',
+  'sessions.json',
+  'feedbacks.json',
   // Add more feature files here as you create them
 ];
 
