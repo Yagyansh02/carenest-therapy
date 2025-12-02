@@ -1,6 +1,7 @@
 import { Assessment } from "../models/assessment.models.js";
 import { Therapist } from "../models/therapist.models.js";
 import { User } from "../models/user.models.js";
+import { Session } from "../models/session.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -120,6 +121,21 @@ const getAssessmentByPatientId = asyncHandler(async (req, res) => {
   // Check authorization
   if (!["therapist", "admin"].includes(req.user.role)) {
     throw new ApiError(403, "Only therapists and admins can view patient assessments");
+  }
+
+  // If user is a therapist, check if they have a session with this patient
+  if (req.user.role === "therapist") {
+    const hasSession = await Session.findOne({
+      therapistId: req.user._id,
+      patientId: patientId,
+    });
+
+    if (!hasSession) {
+      throw new ApiError(
+        403,
+        "You can only view assessments of patients you have sessions with"
+      );
+    }
   }
 
   const assessment = await Assessment.findOne({ patientId }).populate(

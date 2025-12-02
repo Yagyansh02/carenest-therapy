@@ -328,6 +328,13 @@ const getMyTherapistSessions = asyncHandler(async (req, res) => {
 
   const sessions = await Session.find(filter)
     .populate("patientId", "fullName email phoneNumber")
+    .populate({
+      path: 'patientId',
+      populate: {
+        path: 'assessment',
+        select: 'answers'
+      }
+    })
     .sort(sortBy)
     .skip(skip)
     .limit(limitNum);

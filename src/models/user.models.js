@@ -46,8 +46,20 @@ const userSchema = new Schema(
             type: String,
         },
     },
-    { timestamps: true } // automatically add createdAt and updatedAt fields
+    { 
+        timestamps: true, // automatically add createdAt and updatedAt fields
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true }
+    }
 );
+
+// Virtual field for assessment
+userSchema.virtual('assessment', {
+    ref: 'Assessment',
+    localField: '_id',
+    foreignField: 'patientId',
+    justOne: true
+});
 
 /**
  * Pre-save middleware:
