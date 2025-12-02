@@ -261,6 +261,16 @@ const getMyPatientSessions = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limitNum);
 
+  // Populate therapist profile for each session to get specializations
+  for (let session of sessions) {
+    if (session.therapistId) {
+      const therapistProfile = await Therapist.findOne({ userId: session.therapistId._id });
+      if (therapistProfile) {
+        session.therapistId.therapistProfile = therapistProfile;
+      }
+    }
+  }
+
   const totalSessions = await Session.countDocuments(filter);
 
   return res.status(200).json(
