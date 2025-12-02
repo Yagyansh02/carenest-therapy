@@ -40,11 +40,17 @@ const sessionSchema = new Schema(
     },
     /**
      * Session status
+     * pending: Waiting for therapist approval
+     * confirmed: Therapist accepted, session scheduled
+     * completed: Session finished
+     * cancelled: Session cancelled by patient/therapist
+     * rejected: Therapist rejected the request
+     * no-show: Patient didn't attend
      */
     status: {
       type: String,
-      enum: ["scheduled", "completed", "cancelled", "no-show"],
-      default: "scheduled",
+      enum: ["pending", "confirmed", "scheduled", "completed", "cancelled", "rejected", "no-show"],
+      default: "pending",
       index: true,
     },
     /**

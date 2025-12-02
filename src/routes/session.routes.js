@@ -14,6 +14,9 @@ import {
   deleteSession,
   getTherapistStatistics,
   getPatientStatistics,
+  acceptSession,
+  rejectSession,
+  getPendingSessions,
 } from "../controllers/session.controllers.js";
 import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
@@ -37,9 +40,12 @@ router.route("/patient/statistics").get(verifyRole("patient"), getPatientStatist
 
 // Therapist-specific routes
 router.route("/therapist/my-sessions").get(verifyRole("therapist"), getMyTherapistSessions);
+router.route("/therapist/pending").get(verifyRole("therapist"), getPendingSessions);
 router.route("/therapist/statistics").get(verifyRole("therapist"), getTherapistStatistics);
 
 // Session status updates
+router.route("/:id/accept").post(verifyRole("therapist"), acceptSession);
+router.route("/:id/reject").post(verifyRole("therapist"), rejectSession);
 router.route("/:id/cancel").post(cancelSession);
 router.route("/:id/complete").post(verifyRole("therapist"), completeSession);
 router.route("/:id/no-show").post(verifyRole("therapist"), markNoShow);
