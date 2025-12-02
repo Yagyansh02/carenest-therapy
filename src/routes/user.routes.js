@@ -9,6 +9,8 @@ import {
   getAllUsers,
   getUserById,
   updateUserProfile,
+  deleteUser,
+  toggleUserActive,
 } from "../controllers/user.controllers.js";
 import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
@@ -30,6 +32,7 @@ router.route("/change-password").post(changePassword);
 // User management
 router.route("/").get(verifyRole("admin"), getAllUsers);
 router.route("/profile").patch(updateUserProfile);
-router.route("/:id").get(getUserById);
+router.route("/:id").get(getUserById).delete(verifyRole("admin"), deleteUser);
+router.route("/:id/toggle-active").patch(verifyRole("admin"), toggleUserActive);
 
 export default router;

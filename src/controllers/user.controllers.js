@@ -303,11 +303,33 @@ const changePassword = asyncHandler(async (req, res) => {
  * @access Private (requires authentication and admin role)
  */
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().select("-password -refreshToken");
+  const { page = 1, limit = 1000, role } = req.query;
+  
+  // Build query
+  const query = {};
+  if (role) {
+    query.role = role;
+  }
+  
+  const users = await User.find(query)
+    .select("-password -refreshToken")
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+  
+  const total = await User.countDocuments(query);
   
   res
     .status(200)
-    .json(new ApiResponse(200, users, "Users fetched successfully"));
+    .json(new ApiResponse(200, { 
+      users, 
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    }, "Users fetched successfully"));
 });
 
 /**
@@ -350,6 +372,61 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Profile updated successfully"));
 });
 
+/**
+ * Delete user by ID (Admin only)
+ * @route DELETE /api/v1/users/:id
+ * @access Private (Admin only)
+ */
+const deleteUser = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  // Prevent admin from deleting themselves
+  if (id === req.user._id.toString()) {
+    throw new ApiError(400, "You cannot delete your own account");
+  }
+  
+  const user = await User.findById(id);
+  
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  
+  await User.findByIdAndDelete(id);
+  
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "User deleted successfully"));
+});
+
+/**
+ * Toggle user active status (Admin only)
+ * @route PATCH /api/v1/users/:id/toggle-active
+ * @access Private (Admin only)
+ */
+const toggleUserActive = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  
+  // Prevent admin from deactivating themselves
+  if (id === req.user._id.toString()) {
+    throw new ApiError(400, "You cannot deactivate your own account");
+  }
+  
+  const user = await User.findById(id);
+  
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  
+  user.isActive = !user.isActive;
+  await user.save({ validateBeforeSave: false });
+  
+  const updatedUser = await User.findById(id).select("-password -refreshToken");
+  
+  res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, `User ${user.isActive ? 'activated' : 'deactivated'} successfully`));
+});
+
 export { 
   registerUser, 
   loginUser, 
@@ -359,5 +436,7 @@ export {
   changePassword,
   getAllUsers, 
   getUserById, 
-  updateUserProfile 
+  updateUserProfile,
+  deleteUser,
+  toggleUserActive
 };

@@ -1,6 +1,7 @@
 import { Session } from "../models/session.model.js";
 import { User } from "../models/user.models.js";
 import { Therapist } from "../models/therapist.models.js";
+import { Supervisor } from "../models/supervisor.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -157,6 +158,10 @@ const getAllSessions = asyncHandler(async (req, res) => {
     filter.patientId = req.user._id;
   } else if (req.user.role === "therapist") {
     filter.therapistId = req.user._id;
+  } else if (req.user.role === "supervisor") {
+    // Supervisors can view all sessions (will be filtered on frontend by supervised therapists)
+    // This allows them to generate reports for their supervised therapists
+    // The frontend already has the list of supervised therapists and will filter accordingly
   } else if (req.user.role !== "admin") {
     throw new ApiError(403, "You are not authorized to view sessions");
   }
