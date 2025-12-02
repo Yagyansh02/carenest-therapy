@@ -41,15 +41,25 @@ const createTherapistProfile = asyncHandler(async (req, res) => {
 
   // If student, supervisor is required
   if (isStudent && !supervisorId) {
-    throw new ApiError(400, "Supervisor ID is required for student therapists");
+    throw new ApiError(400, "Supervisor Professional License Number is required for student therapists");
   }
 
-  // Verify supervisor profile exists
+  // Verify supervisor profile exists and get the actual supervisor ID
+  let actualSupervisorId = null;
   if (supervisorId) {
-    const supervisor = await Supervisor.findById(supervisorId);
+    // Try to find supervisor by professional license number first
+    let supervisor = await Supervisor.findOne({ professionalLicenseNumber: supervisorId });
+    
+    // If not found, try by MongoDB _id (backward compatibility)
     if (!supervisor) {
-      throw new ApiError(400, "Invalid supervisor ID - Supervisor profile not found");
+      supervisor = await Supervisor.findById(supervisorId);
     }
+    
+    if (!supervisor) {
+      throw new ApiError(400, "Invalid supervisor - Supervisor not found. Please check the Professional License Number.");
+    }
+    
+    actualSupervisorId = supervisor._id;
   }
 
   // Create therapist profile
@@ -63,7 +73,7 @@ const createTherapistProfile = asyncHandler(async (req, res) => {
     sessionRate,
     qualifications: qualifications || [],
     availability: availability || {},
-    supervisorId: supervisorId || null,
+    supervisorId: actualSupervisorId || null,
     verificationStatus: "pending",
   });
 
@@ -444,8 +454,10 @@ const verifyTherapist = asyncHandler(async (req, res) => {
 
   // Check authorization
   // If student therapist, only their supervisor can verify
-  if (therapist.isStudent) {
-    if (!therapist.supervisorId || therapist.supervisorId.toString() !== req.user._id.toString()) {
+  if (therapist.isStudent && therapist.supervisorId) {
+    // Get the supervisor profile to check if it belongs to the current user
+    const supervisorProfile = await Supervisor.findById(therapist.supervisorId);
+    if (!supervisorProfile || supervisorProfile.userId.toString() !== req.user._id.toString()) {
       throw new ApiError(403, "You can only verify your own students");
     }
   }
