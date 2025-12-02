@@ -81,12 +81,12 @@ const therapistProfileSchema = new Schema(
     },
 
     /**
-     * Link to the supervisor's User document.
+     * Link to the supervisor's profile document.
      * Only applicable if isStudent is true.
      */
     supervisorId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Supervisor",
       default: null,
     },
 
