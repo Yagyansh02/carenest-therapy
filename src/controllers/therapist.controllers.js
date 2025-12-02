@@ -1,5 +1,6 @@
 import { Therapist } from "../models/therapist.models.js";
 import { User } from "../models/user.models.js";
+import { Supervisor } from "../models/supervisor.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -43,11 +44,11 @@ const createTherapistProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Supervisor ID is required for student therapists");
   }
 
-  // Verify supervisor exists and has supervisor role
+  // Verify supervisor profile exists
   if (supervisorId) {
-    const supervisor = await User.findById(supervisorId);
-    if (!supervisor || supervisor.role !== "supervisor") {
-      throw new ApiError(400, "Invalid supervisor ID");
+    const supervisor = await Supervisor.findById(supervisorId);
+    if (!supervisor) {
+      throw new ApiError(400, "Invalid supervisor ID - Supervisor profile not found");
     }
   }
 
@@ -68,7 +69,10 @@ const createTherapistProfile = asyncHandler(async (req, res) => {
 
   const createdProfile = await Therapist.findById(therapistProfile._id)
     .populate("userId", "fullName email")
-    .populate("supervisorId", "fullName email");
+    .populate({
+      path: "supervisorId",
+      populate: { path: "userId", select: "fullName email" }
+    });
 
   return res
     .status(201)
