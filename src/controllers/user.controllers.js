@@ -64,6 +64,10 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
+  if (/\d/.test(fullName)) {
+    throw new ApiError(400, "Full name cannot contain numbers");
+  }
+
   // Check if user already exists
   const existedUser = await User.findOne({ email });
   if (existedUser) {
@@ -359,6 +363,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   
   if (!fullName || fullName.trim() === "") {
     throw new ApiError(400, "Full name is required");
+  }
+
+  if (/\d/.test(fullName)) {
+    throw new ApiError(400, "Full name cannot contain numbers");
   }
   
   const user = await User.findByIdAndUpdate(
