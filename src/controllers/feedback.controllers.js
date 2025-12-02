@@ -7,6 +7,39 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 /**
+ * Helper function to update therapist's average rating
+ */
+const updateTherapistAverageRating = async (therapistUserId) => {
+  try {
+    // Find the therapist profile
+    const therapistProfile = await Therapist.findOne({ userId: therapistUserId });
+    if (!therapistProfile) {
+      console.log(`Therapist profile not found for user ${therapistUserId}`);
+      return;
+    }
+
+    // Calculate average from all patient-to-therapist feedbacks
+    const feedbacks = await Feedback.find({
+      toUser: therapistUserId,
+      feedbackType: "patient-to-therapist",
+      isVisible: true,
+    });
+
+    if (feedbacks.length === 0) {
+      therapistProfile.averageRating = 0;
+    } else {
+      const totalRating = feedbacks.reduce((sum, f) => sum + f.overallRating, 0);
+      therapistProfile.averageRating = parseFloat((totalRating / feedbacks.length).toFixed(2));
+    }
+
+    await therapistProfile.save();
+    console.log(`Updated average rating for therapist ${therapistUserId}: ${therapistProfile.averageRating}`);
+  } catch (error) {
+    console.error(`Error updating therapist average rating:`, error);
+  }
+};
+
+/**
  * Create feedback
  * @route POST /api/v1/feedbacks
  * @access Private (Patient, Therapist, or Supervisor based on feedback type)
@@ -140,6 +173,11 @@ const createFeedback = asyncHandler(async (req, res) => {
     .populate("fromUser", "fullName email role")
     .populate("toUser", "fullName email role")
     .populate("sessionId", "scheduledAt duration status");
+
+  // Update therapist's average rating if this is patient-to-therapist feedback
+  if (feedbackType === "patient-to-therapist") {
+    await updateTherapistAverageRating(toUserId);
+  }
 
   return res
     .status(201)
@@ -377,6 +415,11 @@ const updateFeedback = asyncHandler(async (req, res) => {
     .populate("toUser", "fullName email role")
     .populate("sessionId", "scheduledAt duration status");
 
+  // Update therapist's average rating if this is patient-to-therapist feedback and rating was changed
+  if (feedback.feedbackType === "patient-to-therapist" && overallRating !== undefined) {
+    await updateTherapistAverageRating(feedback.toUser);
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, updatedFeedback, "Feedback updated successfully"));
@@ -406,6 +449,11 @@ const deleteFeedback = asyncHandler(async (req, res) => {
   }
 
   await Feedback.findByIdAndDelete(id);
+
+  // Update therapist's average rating if this was patient-to-therapist feedback
+  if (feedback.feedbackType === "patient-to-therapist") {
+    await updateTherapistAverageRating(feedback.toUser);
+  }
 
   return res
     .status(200)

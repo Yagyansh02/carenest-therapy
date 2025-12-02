@@ -41,6 +41,12 @@ const userSchema = new Schema(
             default: "patient",
         },
 
+        // Account status - can be used to disable/ban users
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+
         // Optional refresh token for issuing new access tokens without re-login
         refreshToken: {
             type: String,
