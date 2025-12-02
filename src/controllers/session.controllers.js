@@ -53,30 +53,41 @@ const createSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Scheduled time must be in the future");
   }
 
-  // Check for scheduling conflicts
+  // Check if patient has previous confirmed/completed sessions with this therapist (for free trial)
+  const previousSession = await Session.findOne({
+    patientId,
+    therapistId,
+    status: { $in: ["confirmed", "completed"] },
+  });
+
+  const isFreeTrial = !previousSession;
+  const finalSessionFee = isFreeTrial ? 0 : (sessionFee || therapistProfile.sessionRate);
+
+  // Check for scheduling conflicts (only with confirmed/scheduled sessions)
   const conflictingSession = await Session.findOne({
     therapistId,
     scheduledAt: {
       $gte: new Date(scheduledDate.getTime() - (duration || 60) * 60 * 1000),
       $lte: new Date(scheduledDate.getTime() + (duration || 60) * 60 * 1000),
     },
-    status: { $in: ["scheduled", "completed"] },
+    status: { $in: ["confirmed", "scheduled", "completed"] },
   });
 
   if (conflictingSession) {
     throw new ApiError(409, "Therapist has a conflicting session at this time");
   }
 
-  // Create session
+  // Create session with pending status (requires therapist approval)
+  // Payment is always marked as paid since patient pays before booking
   const session = await Session.create({
     patientId,
     therapistId,
     scheduledAt: scheduledDate,
     duration: duration || 60,
     sessionType: "video",
-    sessionFee: sessionFee || therapistProfile.sessionRate,
-    status: "scheduled",
-    paymentStatus: "pending",
+    sessionFee: finalSessionFee,
+    status: "pending",
+    paymentStatus: "paid", // Payment done by patient before booking
   });
 
   const createdSession = await Session.findById(session._id)
@@ -759,6 +770,121 @@ const getPatientStatistics = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, statistics, "Statistics fetched successfully"));
 });
 
+/**
+ * Accept session request (Therapist)
+ * @route POST /api/v1/sessions/:id/accept
+ * @access Private (Therapist only)
+ */
+const acceptSession = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { meetingLink, therapistNotes } = req.body;
+
+  // Validate meeting link
+  if (!meetingLink || !meetingLink.trim()) {
+    throw new ApiError(400, "Meeting link is required to accept session");
+  }
+
+  const session = await Session.findById(id);
+
+  if (!session) {
+    throw new ApiError(404, "Session not found");
+  }
+
+  // Only therapist can accept their sessions
+  if (req.user._id.toString() !== session.therapistId.toString()) {
+    throw new ApiError(403, "Only the assigned therapist can accept this session");
+  }
+
+  // Check if session is in pending status
+  if (session.status !== "pending") {
+    throw new ApiError(400, `Cannot accept session with status: ${session.status}`);
+  }
+
+  // Update session
+  session.status = "confirmed";
+  session.meetingLink = meetingLink.trim();
+  if (therapistNotes) {
+    session.therapistNotes = therapistNotes;
+  }
+
+  await session.save();
+
+  const acceptedSession = await Session.findById(session._id)
+    .populate("patientId", "fullName email")
+    .populate("therapistId", "fullName email");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, acceptedSession, "Session accepted successfully"));
+});
+
+/**
+ * Reject session request (Therapist)
+ * @route POST /api/v1/sessions/:id/reject
+ * @access Private (Therapist only)
+ */
+const rejectSession = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+
+  const session = await Session.findById(id);
+
+  if (!session) {
+    throw new ApiError(404, "Session not found");
+  }
+
+  // Only therapist can reject their sessions
+  if (req.user._id.toString() !== session.therapistId.toString()) {
+    throw new ApiError(403, "Only the assigned therapist can reject this session");
+  }
+
+  // Check if session is in pending status
+  if (session.status !== "pending") {
+    throw new ApiError(400, `Cannot reject session with status: ${session.status}`);
+  }
+
+  // Update session
+  session.status = "rejected";
+  session.cancellationReason = reason || "Therapist rejected the request";
+  session.cancelledBy = req.user._id;
+
+  await session.save();
+
+  const rejectedSession = await Session.findById(session._id)
+    .populate("patientId", "fullName email")
+    .populate("therapistId", "fullName email");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, rejectedSession, "Session rejected successfully"));
+});
+
+/**
+ * Get pending sessions for therapist
+ * @route GET /api/v1/sessions/therapist/pending
+ * @access Private (Therapist only)
+ */
+const getPendingSessions = asyncHandler(async (req, res) => {
+  const therapistId = req.user._id;
+
+  const pendingSessions = await Session.find({
+    therapistId,
+    status: "pending",
+  })
+    .populate("patientId", "fullName email phone")
+    .sort({ scheduledAt: 1 });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { sessions: pendingSessions, count: pendingSessions.length },
+        "Pending sessions fetched successfully"
+      )
+    );
+});
+
 export {
   createSession,
   getSessionById,
@@ -774,4 +900,7 @@ export {
   deleteSession,
   getTherapistStatistics,
   getPatientStatistics,
+  acceptSession,
+  rejectSession,
+  getPendingSessions,
 };
