@@ -679,7 +679,7 @@ const getTherapistStatistics = asyncHandler(async (req, res) => {
   });
   const scheduledSessions = await Session.countDocuments({
     therapistId,
-    status: "scheduled",
+    status: { $in: ["confirmed", "scheduled"] },
   });
   const noShowSessions = await Session.countDocuments({
     therapistId,
@@ -742,7 +742,7 @@ const getPatientStatistics = asyncHandler(async (req, res) => {
   });
   const scheduledSessions = await Session.countDocuments({
     patientId,
-    status: "scheduled",
+    status: { $in: ["confirmed", "scheduled"] },
   });
 
   // Calculate total spending
