@@ -8,8 +8,9 @@ import { ApiError } from "../utils/ApiError.js";
  * @param {Request} req - Express request object
  * @param {Response} res - Express response object
  * @param {Function} next - Express next middleware function
+ * @param {WriteStream} errorLogStream - Optional write stream for logging errors to file
  */
-export const errorHandler = (err, req, res, next) => {
+export const errorHandler = (err, req, res, next, errorLogStream) => {
   let error = err;
 
   // If error is not an instance of ApiError, wrap it
@@ -17,6 +18,23 @@ export const errorHandler = (err, req, res, next) => {
     const statusCode = error.statusCode || 500;
     const message = error.message || "Something went wrong";
     error = new ApiError(statusCode, message, error.errors || [], err.stack);
+  }
+
+  // Log error to file if stream is provided
+  if (errorLogStream) {
+    const errorLog = {
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip || req.connection.remoteAddress,
+      statusCode: error.statusCode,
+      message: error.message,
+      errors: error.errors,
+      userAgent: req.get('user-agent'),
+      stack: error.stack
+    };
+    
+    errorLogStream.write(JSON.stringify(errorLog) + '\n');
   }
 
   const response = {
