@@ -8,6 +8,7 @@ import {
   changePassword,
   getAllUsers,
   getUserById,
+  getUserDetail,
   updateUserProfile,
   deleteUser,
   toggleUserActive,
@@ -32,6 +33,7 @@ router.route("/change-password").post(changePassword);
 // User management
 router.route("/").get(verifyRole("admin"), getAllUsers);
 router.route("/profile").patch(updateUserProfile);
+router.route("/:id/detail").get(verifyRole("admin"), getUserDetail);
 router.route("/:id").get(getUserById).delete(verifyRole("admin"), deleteUser);
 router.route("/:id/toggle-active").patch(verifyRole("admin"), toggleUserActive);
 

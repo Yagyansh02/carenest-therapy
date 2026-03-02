@@ -3,6 +3,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
+import { Patient } from "../models/patient.models.js";
+import { Therapist } from "../models/therapist.models.js";
+import { Session } from "../models/session.model.js";
 
 /**
  * Cookie options for secure token storage
@@ -435,6 +438,96 @@ const toggleUserActive = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, updatedUser, `User ${user.isActive ? 'activated' : 'deactivated'} successfully`));
 });
 
+/**
+ * Get detailed user info for admin – role-aware
+ * Patient  → user + patient profile + session history
+ * Therapist → user + therapist profile + session stats + patient list
+ *
+ * @route GET /api/v1/users/:id/detail
+ * @access Private (Admin only)
+ */
+const getUserDetail = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const user = await User.findById(id).select("-password -refreshToken");
+  if (!user) throw new ApiError(404, "User not found");
+
+  // ── PATIENT ───────────────────────────────────────────────────────────────
+  if (user.role === "patient") {
+    const patientProfile = await Patient.findOne({ userId: id });
+
+    const sessions = await Session.find({ patientId: id })
+      .populate("therapistId", "fullName email")
+      .sort({ scheduledAt: -1 });
+
+    const stats = {
+      totalSessions: sessions.length,
+      completedSessions: sessions.filter((s) => s.status === "completed").length,
+      cancelledSessions: sessions.filter((s) => s.status === "cancelled").length,
+      pendingSessions: sessions.filter((s) =>
+        ["pending", "confirmed"].includes(s.status)
+      ).length,
+    };
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { user, patientProfile: patientProfile || null, sessions, stats },
+        "Patient detail fetched successfully"
+      )
+    );
+  }
+
+  // ── THERAPIST ─────────────────────────────────────────────────────────────
+  if (user.role === "therapist") {
+    const therapistProfile = await Therapist.findOne({ userId: id }).populate(
+      "supervisorId",
+      "userId professionalLicenseNumber"
+    );
+
+    const sessions = await Session.find({ therapistId: id })
+      .populate("patientId", "fullName email")
+      .sort({ scheduledAt: -1 });
+
+    // Unique patients who've had at least one session
+    const seenPatientIds = new Set();
+    const uniquePatients = [];
+    for (const s of sessions) {
+      if (s.patientId && !seenPatientIds.has(s.patientId._id.toString())) {
+        seenPatientIds.add(s.patientId._id.toString());
+        uniquePatients.push(s.patientId);
+      }
+    }
+
+    const stats = {
+      totalSessions: sessions.length,
+      completedSessions: sessions.filter((s) => s.status === "completed").length,
+      cancelledSessions: sessions.filter((s) => s.status === "cancelled").length,
+      pendingSessions: sessions.filter((s) =>
+        ["pending", "confirmed"].includes(s.status)
+      ).length,
+      totalPatients: uniquePatients.length,
+      totalRevenue: sessions
+        .filter((s) => s.status === "completed")
+        .reduce((sum, s) => sum + (s.sessionFee || 0), 0),
+      lastSessionDate: sessions.length ? sessions[0].scheduledAt : null,
+    };
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { user, therapistProfile: therapistProfile || null, sessions, uniquePatients, stats },
+        "Therapist detail fetched successfully"
+      )
+    );
+  }
+
+  // ── OTHER ROLES (supervisor, admin) ──────────────────────────────────────
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { user }, "User detail fetched successfully"));
+});
+
 export { 
   registerUser, 
   loginUser, 
@@ -443,7 +536,8 @@ export {
   getCurrentUser,
   changePassword,
   getAllUsers, 
-  getUserById, 
+  getUserById,
+  getUserDetail,
   updateUserProfile,
   deleteUser,
   toggleUserActive
