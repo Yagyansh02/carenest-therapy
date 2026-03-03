@@ -78,11 +78,11 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   // Validate role if provided
-  const validRoles = ["patient", "therapist", "supervisor"];
+  const validRoles = ["patient", "therapist", "supervisor", "college"];
   if (role && !validRoles.includes(role)) {
     throw new ApiError(
       400,
-      "Invalid role. Must be patient, therapist, or supervisor"
+      "Invalid role. Must be patient, therapist, supervisor, or college"
     );
   }
 

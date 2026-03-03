@@ -1,0 +1,286 @@
+{
+  "paths": {
+    "/api/v1/colleges/profile": {
+      "post": {
+        "tags": ["Colleges"],
+        "summary": "Create college profile",
+        "description": "Create a detailed college/institution profile with affiliation information",
+        "operationId": "createCollegeProfile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["institutionName", "affiliationNumber"],
+                "properties": {
+                  "institutionName": {
+                    "type": "string",
+                    "description": "Official name of the institution",
+                    "example": "National Institute of Mental Health"
+                  },
+                  "affiliationNumber": {
+                    "type": "string",
+                    "description": "Official registration / affiliation number (must be unique)",
+                    "example": "NIMH-2024-001"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Full address of the institution",
+                    "example": "123 University Road, City"
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "description": "Contact phone number",
+                    "example": "+91-9876543210"
+                  },
+                  "website": {
+                    "type": "string",
+                    "description": "Official website URL",
+                    "example": "https://nimh.edu.in"
+                  },
+                  "contactPersonName": {
+                    "type": "string",
+                    "description": "Name of the designated contact person",
+                    "example": "Dr. Sharma"
+                  },
+                  "contactPersonEmail": {
+                    "type": "string",
+                    "description": "Email of the contact person",
+                    "example": "sharma@nimh.edu.in"
+                  },
+                  "department": {
+                    "type": "string",
+                    "description": "Department managing the internship programme",
+                    "example": "Department of Psychiatry"
+                  },
+                  "agreementStartDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "MOU / agreement start date",
+                    "example": "2024-01-01"
+                  },
+                  "agreementEndDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "MOU / agreement end date",
+                    "example": "2025-12-31"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "College profile created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/College"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "description": "Validation error" },
+          "403": { "description": "Only college users can create college profiles" },
+          "409": { "description": "Profile or affiliation number already exists" }
+        }
+      },
+      "put": {
+        "tags": ["Colleges"],
+        "summary": "Update college profile",
+        "description": "Update existing college profile information",
+        "operationId": "updateCollegeProfile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "institutionName": { "type": "string" },
+                  "affiliationNumber": { "type": "string" },
+                  "address": { "type": "string" },
+                  "contactPhone": { "type": "string" },
+                  "website": { "type": "string" },
+                  "contactPersonName": { "type": "string" },
+                  "contactPersonEmail": { "type": "string" },
+                  "department": { "type": "string" },
+                  "agreementStartDate": { "type": "string", "format": "date" },
+                  "agreementEndDate": { "type": "string", "format": "date" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "College profile updated successfully" },
+          "400": { "description": "Validation error" },
+          "404": { "description": "College profile not found" },
+          "409": { "description": "Affiliation number already registered" }
+        }
+      },
+      "delete": {
+        "tags": ["Colleges"],
+        "summary": "Delete college profile",
+        "description": "Delete the authenticated college's profile",
+        "operationId": "deleteCollegeProfile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "College profile deleted successfully" },
+          "404": { "description": "College profile not found" }
+        }
+      }
+    },
+    "/api/v1/colleges": {
+      "get": {
+        "tags": ["Colleges"],
+        "summary": "Get all colleges",
+        "description": "Fetch all college profiles with optional search and pagination",
+        "operationId": "getAllColleges",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10, "maximum": 50 }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search by name, email, institution name, affiliation number, or department",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colleges fetched successfully"
+          }
+        }
+      }
+    },
+    "/api/v1/colleges/me": {
+      "get": {
+        "tags": ["Colleges"],
+        "summary": "Get my college profile",
+        "description": "Get the authenticated college user's profile",
+        "operationId": "getMyCollegeProfile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profile fetched successfully" },
+          "404": { "description": "College profile not found" }
+        }
+      }
+    },
+    "/api/v1/colleges/{id}": {
+      "get": {
+        "tags": ["Colleges"],
+        "summary": "Get college by ID",
+        "description": "Get a specific college profile by its ID",
+        "operationId": "getCollegeById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "College profile ID"
+          }
+        ],
+        "responses": {
+          "200": { "description": "College fetched successfully" },
+          "404": { "description": "College not found" }
+        }
+      }
+    },
+    "/api/v1/colleges/students/{studentId}": {
+      "post": {
+        "tags": ["Colleges"],
+        "summary": "Add student to college",
+        "description": "Add a student therapist (intern) to the college's affiliated students list",
+        "operationId": "addStudentToCollege",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "User ID of the student (therapist) to add"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Student added to college successfully" },
+          "404": { "description": "Student therapist or college profile not found" },
+          "409": { "description": "Student is already affiliated" }
+        }
+      },
+      "delete": {
+        "tags": ["Colleges"],
+        "summary": "Remove student from college",
+        "description": "Remove a student therapist from the college's affiliated students list",
+        "operationId": "removeStudentFromCollege",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "User ID of the student to remove"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Student removed from college successfully" },
+          "404": { "description": "Student not affiliated or college profile not found" }
+        }
+      }
+    }
+  },
+  "schemas": {
+    "College": {
+      "type": "object",
+      "properties": {
+        "_id": { "type": "string" },
+        "userId": { "$ref": "#/components/schemas/UserBasic" },
+        "institutionName": { "type": "string" },
+        "affiliationNumber": { "type": "string" },
+        "address": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "website": { "type": "string" },
+        "contactPersonName": { "type": "string" },
+        "contactPersonEmail": { "type": "string" },
+        "department": { "type": "string" },
+        "affiliatedStudents": {
+          "type": "array",
+          "items": { "$ref": "#/components/schemas/UserBasic" }
+        },
+        "agreementStartDate": { "type": "string", "format": "date" },
+        "agreementEndDate": { "type": "string", "format": "date" },
+        "verificationStatus": {
+          "type": "string",
+          "enum": ["pending", "verified", "rejected"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

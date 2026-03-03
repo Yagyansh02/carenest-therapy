@@ -30,6 +30,7 @@ const FEATURE_FILES = [
   'assessments.json',
   'sessions.json',
   'feedbacks.json',
+  'colleges.json',
   // Add more feature files here as you create them
 ];
 

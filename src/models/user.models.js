@@ -37,7 +37,7 @@ const userSchema = new Schema(
         // Role controls access/permissions within the system
         role: {
             type: String,
-            enum: ["patient", "therapist", "supervisor","admin"],
+            enum: ["patient", "therapist", "supervisor", "admin", "college"],
             default: "patient",
         },
 
