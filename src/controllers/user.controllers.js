@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { Patient } from "../models/patient.models.js";
 import { Therapist } from "../models/therapist.models.js";
 import { Session } from "../models/session.model.js";
+import { College } from "../models/college.models.js";
 
 /**
  * Cookie options for secure token storage
@@ -518,6 +519,22 @@ const getUserDetail = asyncHandler(async (req, res) => {
         200,
         { user, therapistProfile: therapistProfile || null, sessions, uniquePatients, stats },
         "Therapist detail fetched successfully"
+      )
+    );
+  }
+
+  // ── COLLEGE ───────────────────────────────────────────────────────────────
+  if (user.role === "college") {
+    const collegeProfile = await College.findOne({ userId: id }).populate(
+      "affiliatedStudents",
+      "fullName email"
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { user, collegeProfile: collegeProfile || null },
+        "College detail fetched successfully"
       )
     );
   }
