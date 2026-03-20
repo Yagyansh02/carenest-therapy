@@ -68,6 +68,7 @@ import sessionRouter from './routes/session.routes.js';
 import feedbackRouter from './routes/feedback.routes.js';
 import collegeRouter from './routes/college.routes.js';
 import docsRouter from './routes/docs.routes.js';
+import videoCallRouter from './routes/videoCall.routes.js';
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
@@ -75,6 +76,7 @@ app.use("/api/v1/therapists", therapistRouter);
 app.use("/api/v1/supervisors", supervisorRouter);
 app.use("/api/v1/assessments", assessmentRouter);
 app.use("/api/v1/sessions", sessionRouter);
+app.use("/api/v1/video", videoCallRouter);
 
 app.use("/api/v1/feedbacks", feedbackRouter);
 app.use("/api/v1/colleges", collegeRouter);

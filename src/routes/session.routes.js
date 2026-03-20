@@ -17,6 +17,7 @@ import {
   acceptSession,
   rejectSession,
   getPendingSessions,
+  getTherapistBookedSlots,
 } from "../controllers/session.controllers.js";
 import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
@@ -42,6 +43,7 @@ router.route("/patient/statistics").get(verifyRole("patient"), getPatientStatist
 router.route("/therapist/my-sessions").get(verifyRole("therapist"), getMyTherapistSessions);
 router.route("/therapist/pending").get(verifyRole("therapist"), getPendingSessions);
 router.route("/therapist/statistics").get(verifyRole("therapist"), getTherapistStatistics);
+router.route("/therapist/:therapistId/booked-slots").get(getTherapistBookedSlots);
 
 // Session status updates
 router.route("/:id/accept").post(verifyRole("therapist"), acceptSession);

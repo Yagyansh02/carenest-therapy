@@ -5,6 +5,7 @@ import { Supervisor } from "../models/supervisor.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { BUILTIN_VIDEO_MARKER } from "../services/videoService.js";
 
 /**
  * Create a new session
@@ -64,14 +65,19 @@ const createSession = asyncHandler(async (req, res) => {
   const isFreeTrial = !previousSession;
   const finalSessionFee = isFreeTrial ? 0 : (sessionFee || therapistProfile.sessionRate);
 
-  // Check for scheduling conflicts (only with confirmed/scheduled sessions)
+  // Check for scheduling conflicts (only with pending/confirmed/scheduled sessions)
+  // An overlap exists if an existing session starts before the new one ends,
+  // AND the existing session ends after the new one starts.
+  // Assuming all slots are roughly 1 hour max for this logic.
+  const durationMs = (duration || 60) * 60 * 1000;
+  
   const conflictingSession = await Session.findOne({
     therapistId,
+    status: { $in: ["pending", "confirmed", "scheduled"] },
     scheduledAt: {
-      $gte: new Date(scheduledDate.getTime() - (duration || 60) * 60 * 1000),
-      $lte: new Date(scheduledDate.getTime() + (duration || 60) * 60 * 1000),
-    },
-    status: { $in: ["confirmed", "scheduled", "completed"] },
+      $gt: new Date(scheduledDate.getTime() - durationMs),
+      $lt: new Date(scheduledDate.getTime() + durationMs),
+    }
   });
 
   if (conflictingSession) {
@@ -799,12 +805,7 @@ const getPatientStatistics = asyncHandler(async (req, res) => {
  */
 const acceptSession = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { meetingLink, therapistNotes } = req.body;
-
-  // Validate meeting link
-  if (!meetingLink || !meetingLink.trim()) {
-    throw new ApiError(400, "Meeting link is required to accept session");
-  }
+  const { therapistNotes } = req.body;
 
   const session = await Session.findById(id);
 
@@ -822,9 +823,9 @@ const acceptSession = asyncHandler(async (req, res) => {
     throw new ApiError(400, `Cannot accept session with status: ${session.status}`);
   }
 
-  // Update session
+  // Auto-assign built-in video room — no external link required
   session.status = "confirmed";
-  session.meetingLink = meetingLink.trim();
+  session.meetingLink = BUILTIN_VIDEO_MARKER;
   if (therapistNotes) {
     session.therapistNotes = therapistNotes;
   }
@@ -907,6 +908,33 @@ const getPendingSessions = asyncHandler(async (req, res) => {
     );
 });
 
+/**
+ * Get booked slots for a specific therapist
+ * @route GET /api/v1/sessions/therapist/:therapistId/booked-slots
+ * @access Private
+ */
+const getTherapistBookedSlots = asyncHandler(async (req, res) => {
+  const { therapistId } = req.params;
+
+  const date = req.query.date ? new Date(req.query.date) : new Date();
+  // By default fetch from today onwards
+  const startDate = new Date(date.setHours(0, 0, 0, 0));
+
+  const bookedSessions = await Session.find({
+    therapistId,
+    status: { $in: ["pending", "confirmed", "scheduled"] },
+    scheduledAt: { $gte: startDate },
+  }).select("scheduledAt duration status");
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { bookedSessions },
+      "Therapist booked slots fetched successfully"
+    )
+  );
+});
+
 export {
   createSession,
   getSessionById,
@@ -925,4 +953,5 @@ export {
   acceptSession,
   rejectSession,
   getPendingSessions,
+  getTherapistBookedSlots,
 };
