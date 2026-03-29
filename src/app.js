@@ -69,6 +69,7 @@ import feedbackRouter from './routes/feedback.routes.js';
 import collegeRouter from './routes/college.routes.js';
 import docsRouter from './routes/docs.routes.js';
 import videoCallRouter from './routes/videoCall.routes.js';
+import chatRouter from './routes/chat.routes.js';
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
@@ -77,6 +78,7 @@ app.use("/api/v1/supervisors", supervisorRouter);
 app.use("/api/v1/assessments", assessmentRouter);
 app.use("/api/v1/sessions", sessionRouter);
 app.use("/api/v1/video", videoCallRouter);
+app.use("/api/v1/chat", chatRouter);
 
 app.use("/api/v1/feedbacks", feedbackRouter);
 app.use("/api/v1/colleges", collegeRouter);
