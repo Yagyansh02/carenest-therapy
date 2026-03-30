@@ -30,6 +30,8 @@ import { College }    from "../models/college.models.js";
 import { Session }    from "../models/session.model.js";
 import { Feedback }   from "../models/feedback.models.js";
 import { Assessment } from "../models/assessment.models.js";
+import { ChatRoom }   from "../models/chatRoom.model.js";
+import { Message }    from "../models/message.model.js";
 
 const DB_NAME = "CarenestTherapy";
 const nid     = () => new mongoose.Types.ObjectId();
@@ -65,6 +67,84 @@ const DURATIONS    = ["Less than a month","1-6 months","6 months - 1 year","More
 const FEES         = [500,700,800,1000,1200,1500];
 const QUARTERS     = ["Q1 2025","Q2 2025","Q3 2025","Q4 2025","Q1 2026"];
 const CANCEL_RSNS  = ["Schedule conflict","Feeling better","Personal reasons","Work emergency","Family emergency"];
+
+// Qualification templates for therapists
+const DEGREES = [
+  { degree: "Ph.D. in Clinical Psychology", institution: "NIMHANS, Bangalore", yearOffset: 8 },
+  { degree: "M.Phil in Clinical Psychology", institution: "NIMHANS, Bangalore", yearOffset: 6 },
+  { degree: "M.A. in Counseling Psychology", institution: "Delhi University", yearOffset: 5 },
+  { degree: "M.Sc. in Psychology", institution: "Mumbai University", yearOffset: 4 },
+  { degree: "Psy.D. in Clinical Psychology", institution: "Tata Institute of Social Sciences", yearOffset: 7 },
+  { degree: "M.A. in Clinical Psychology", institution: "Christ University, Bangalore", yearOffset: 5 },
+  { degree: "Diploma in Psychiatric Social Work", institution: "NIMHANS, Bangalore", yearOffset: 3 },
+  { degree: "Certificate in CBT", institution: "Beck Institute", yearOffset: 2 },
+  { degree: "M.Phil in Psychiatric Social Work", institution: "TISS Mumbai", yearOffset: 6 },
+  { degree: "B.A. in Psychology", institution: "St. Xavier's College, Mumbai", yearOffset: 3 },
+];
+
+// Therapist goals and progress tracking
+const THERAPY_GOALS = [
+  "Reduce anxiety symptoms",
+  "Improve sleep quality",
+  "Develop coping strategies",
+  "Build self-esteem",
+  "Manage stress effectively",
+  "Process grief and loss",
+  "Improve relationship patterns",
+  "Reduce depressive symptoms",
+  "Develop emotional regulation",
+  "Address trauma responses",
+  "Build social connections",
+  "Improve communication skills",
+];
+
+const NEXT_STEPS = [
+  "Continue practicing breathing exercises daily",
+  "Complete the thought record journal before next session",
+  "Practice the grounding techniques when feeling overwhelmed",
+  "Work on identifying and challenging negative thought patterns",
+  "Try the progressive muscle relaxation before sleep",
+  "Schedule at least one social activity this week",
+  "Continue with the mindfulness meditation practice",
+  "Read the recommended chapter on CBT techniques",
+];
+
+// Chat message templates for realistic conversations
+const PATIENT_MESSAGES = [
+  "Hi, I wanted to follow up on what we discussed in our last session.",
+  "I've been practicing the breathing exercises you recommended.",
+  "Thank you for the session today, it was really helpful!",
+  "I have a quick question about the homework assignment.",
+  "I've been feeling much better since our last session.",
+  "Could we discuss my anxiety triggers in our next session?",
+  "I noticed some improvements in my sleep patterns this week.",
+  "The journaling exercise has been really eye-opening.",
+  "I'm looking forward to our next session.",
+  "I wanted to share that I had a small breakthrough today.",
+  "Is it normal to feel a bit emotional after sessions?",
+  "I've been trying the CBT techniques and they're helping.",
+  "Can you recommend any books on managing stress?",
+  "I appreciate your patience and support.",
+  "I had a challenging day but used the coping strategies we discussed.",
+];
+
+const THERAPIST_MESSAGES = [
+  "Thank you for sharing that with me. How are you feeling now?",
+  "That's wonderful progress! Keep up the great work.",
+  "I'm glad to hear the exercises are helping.",
+  "Remember, it's okay to take things one step at a time.",
+  "Let's explore that further in our next session.",
+  "How have you been sleeping since our last session?",
+  "That's a very insightful observation about yourself.",
+  "I'm proud of the progress you're making.",
+  "Please don't hesitate to reach out if you need support.",
+  "Let's continue working on those coping strategies.",
+  "It's completely normal to experience those feelings.",
+  "You're doing great work on your mental health journey.",
+  "I'd recommend continuing with the daily journaling.",
+  "See you in our next session. Take care!",
+  "Remember the grounding technique we practiced if you feel overwhelmed.",
+];
 
 const PT_CMTS = [
   "The session was incredibly helpful. I feel much more confident managing my anxiety.",
@@ -115,6 +195,7 @@ async function seed() {
     User.deleteMany({}), Patient.deleteMany({}), Therapist.deleteMany({}),
     Supervisor.deleteMany({}), College.deleteMany({}),
     Session.deleteMany({}), Feedback.deleteMany({}), Assessment.deleteMany({}),
+    ChatRoom.deleteMany({}), Message.deleteMany({}),
   ]);
 
   const pw  = await bcrypt.hash("Password@123", 10);
@@ -178,15 +259,33 @@ async function seed() {
   const tProfDocs = tUserDocs.map((u, i) => {
     const isStudent = i >= 7;
     const sv = isStudent ? svProfDocs[i % svProfDocs.length] : null;
+    const yearsExp = isStudent ? rand(0, 2) : rand(3, 18);
+    const currentYear = new Date().getFullYear();
+    
+    // Generate 1-3 qualifications for each therapist
+    const qualCount = isStudent ? rand(1, 2) : rand(2, 3);
+    const qualifications = pickMany(DEGREES, qualCount, qualCount).map(deg => ({
+      degree: deg.degree,
+      institution: deg.institution,
+      year: currentYear - yearsExp - deg.yearOffset,
+    }));
+    
     return {
       _id: nid(), userId: u._id,
-      bio: `${T_NAMES[i]} specialises in ${tSpecs[i].slice(0,2).join(" and ")}.`,
+      bio: `${T_NAMES[i]} specialises in ${tSpecs[i].slice(0,2).join(" and ")}. With ${yearsExp} years of experience, ${T_NAMES[i].includes("Dr.") ? "Dr." : ""} ${T_NAMES[i].split(" ").pop()} provides compassionate care to help clients achieve their mental health goals.`,
       isStudent,
+      qualifications,
       licenseNumber: isStudent ? null : `LIC-${2016+i}-${rand(1000,9999)}`,
       specializations: tSpecs[i],
-      yearsOfExperience: isStudent ? rand(0,2) : rand(3,18),
+      yearsOfExperience: yearsExp,
       sessionRate: tFees[i],
-      availability: { monday:["09:00","11:00","14:00"], tuesday:["10:00","13:00"], wednesday:["09:00","15:00"], friday:["11:00","14:00","16:00"] },
+      availability: { 
+        monday: ["09:00","11:00","14:00","16:00"], 
+        tuesday: ["10:00","13:00","15:00"], 
+        wednesday: ["09:00","12:00","15:00"], 
+        thursday: ["10:00","14:00","16:00"],
+        friday: ["11:00","14:00","16:00"] 
+      },
       supervisorId: sv?._id || null,
       verificationStatus: isStudent ? "pending" : i === 0 ? "rejected" : "verified",
       averageRating: 0,
@@ -244,8 +343,25 @@ async function seed() {
 
   // ── Sessions ───────────────────────────────────────────────────────────────
   const STATUS_W = [
-    { v:"completed", w:52 }, { v:"confirmed", w:14 }, { v:"pending", w:10 },
-    { v:"cancelled", w:14 }, { v:"no-show",   w: 5 }, { v:"rejected", w: 5 },
+    { v:"completed", w:48 }, { v:"confirmed", w:12 }, { v:"scheduled", w:8 },
+    { v:"pending", w:10 }, { v:"cancelled", w:12 }, { v:"no-show", w:5 }, { v:"rejected", w:5 },
+  ];
+
+  // Helper for generating mock meeting links
+  const genMeetingLink = (sessionId) => `https://carenest.dev/meet/${sessionId.toString().slice(-8)}`;
+  
+  // Therapist session notes templates
+  const SESSION_NOTES = [
+    "Patient discussed ongoing challenges with anxiety. Introduced breathing techniques and grounding exercises. Good engagement throughout the session.",
+    "Reviewed progress on previous homework. Patient reported improvement in sleep patterns. Discussed CBT techniques for managing negative thoughts.",
+    "Explored childhood experiences and their impact on current relationships. Patient showed insight and willingness to examine patterns.",
+    "Focused on stress management strategies. Patient practiced progressive muscle relaxation during session with positive response.",
+    "Discussed workplace stressors and boundary-setting. Role-played difficult conversations. Patient expressed increased confidence.",
+    "Reviewed mood journal entries. Identified triggers and patterns. Introduced thought challenging techniques.",
+    "Addressed grief processing. Patient shared memories and expressed emotions appropriately. Discussed healthy coping mechanisms.",
+    "Worked on communication skills and assertiveness. Patient practiced using I-statements. Homework: apply techniques in one real situation.",
+    "Explored self-esteem issues and negative self-talk. Introduced cognitive restructuring exercises. Patient receptive to new perspectives.",
+    "Follow-up on trauma processing work. Patient demonstrated improved coping strategies. Continuing EMDR-informed techniques next session.",
   ];
 
   const sessDocs = [];
@@ -259,14 +375,17 @@ async function seed() {
       const mo   = rand(1, 6);
       const scheduledAt = between(monthsAgo(mo + 0.5), monthsAgo(Math.max(0, mo - 0.5)));
       const status = wPick(STATUS_W);
+      const sessId = nid();
       sessDocs.push({
-        _id: nid(),
+        _id: sessId,
         patientId: patient._id, therapistId: tu._id,
         scheduledAt,
         duration: pick([45,60,60,60,90]),
         status, sessionType: "video",
+        meetingLink: ["confirmed", "scheduled", "completed"].includes(status) ? genMeetingLink(sessId) : null,
+        therapistNotes: status === "completed" ? pick(SESSION_NOTES) : null,
         sessionFee: tFees[tIdx],
-        paymentStatus: status === "completed" ? "paid" : "pending",
+        paymentStatus: status === "completed" ? "paid" : status === "cancelled" ? "refunded" : "pending",
         cancellationReason: status === "cancelled" ? pick(CANCEL_RSNS) : null,
         cancelledBy: status === "cancelled" ? (Math.random() < .5 ? patient._id : tu._id) : null,
         createdAt: scheduledAt, updatedAt: scheduledAt,
@@ -283,14 +402,17 @@ async function seed() {
       const tIdx = tUserDocs.indexOf(tu);
       const scheduledAt = between(ds, de);
       const status = d <= 1
-        ? pick(["pending","confirmed"])
+        ? pick(["pending","confirmed","scheduled"])
         : wPick([{ v:"completed", w:6 }, { v:"cancelled", w:2 }, { v:"no-show", w:1 }]);
+      const sessId = nid();
       sessDocs.push({
-        _id: nid(),
+        _id: sessId,
         patientId: pick(pUserDocs)._id, therapistId: tu._id,
         scheduledAt,
         duration: pick([45,60,90]),
         status, sessionType:"video",
+        meetingLink: ["confirmed", "scheduled", "completed"].includes(status) ? genMeetingLink(sessId) : null,
+        therapistNotes: status === "completed" ? pick(SESSION_NOTES) : null,
         sessionFee: tFees[tIdx],
         paymentStatus: status === "completed" ? "paid" : "pending",
         cancellationReason: null, cancelledBy: null,
@@ -301,6 +423,188 @@ async function seed() {
 
   await Session.collection.insertMany(sessDocs);
   console.log(`${sessDocs.length} sessions`);
+
+  // ── Progress Records for Patients ─────────────────────────────────────────
+  // Add progress records for completed sessions
+  const completedSessions = sessDocs.filter(s => s.status === "completed");
+  const progressRecordUpdates = new Map(); // patientId -> progress records array
+  
+  for (const session of completedSessions) {
+    const patientIdStr = session.patientId.toString();
+    if (!progressRecordUpdates.has(patientIdStr)) {
+      progressRecordUpdates.set(patientIdStr, []);
+    }
+    
+    // Get corresponding patient and therapist profile IDs
+    const patientProf = pProfDocs.find(p => p.userId.toString() === patientIdStr);
+    const therapistProf = tProfDocs.find(t => t.userId.toString() === session.therapistId.toString());
+    
+    if (patientProf && therapistProf) {
+      const goals = pickMany(THERAPY_GOALS, 2, 4);
+      const completedGoalsCount = Math.floor(goals.length * Math.random() * 0.8);
+      const completedGoals = goals.slice(0, completedGoalsCount);
+      
+      progressRecordUpdates.get(patientIdStr).push({
+        _id: nid(),
+        patientId: patientProf._id,
+        therapistId: therapistProf._id,
+        sessionId: session._id,
+        notes: `Session focused on ${goals[0].toLowerCase()} and ${goals[1]?.toLowerCase() || 'overall progress'}. Patient showed good engagement and willingness to practice techniques discussed.`,
+        progressScore: rand(3, 10),
+        goals,
+        completedGoals,
+        nextSteps: pick(NEXT_STEPS),
+        createdAt: session.scheduledAt,
+        updatedAt: session.scheduledAt,
+      });
+    }
+  }
+  
+  // Update patient documents with progress records
+  let totalProgressRecords = 0;
+  for (const [patientIdStr, records] of progressRecordUpdates) {
+    if (records.length > 0) {
+      const patientProf = pProfDocs.find(p => p.userId.toString() === patientIdStr);
+      if (patientProf) {
+        await Patient.collection.updateOne(
+          { _id: patientProf._id },
+          { $set: { progressRecords: records } }
+        );
+        totalProgressRecords += records.length;
+      }
+    }
+  }
+  console.log(`${totalProgressRecords} progress records added to patients`);
+
+  // ── Chat Rooms & Messages ──────────────────────────────────────────────────
+  // Create chat rooms for sessions that are confirmed, scheduled, or completed
+  const chatEligibleSessions = sessDocs.filter(s => 
+    ["confirmed", "scheduled", "completed"].includes(s.status)
+  );
+  
+  // Group sessions by patient-therapist pair to create unique chat rooms
+  const patientTherapistPairs = new Map();
+  for (const s of chatEligibleSessions) {
+    const key = `${s.patientId.toString()}-${s.therapistId.toString()}`;
+    if (!patientTherapistPairs.has(key)) {
+      patientTherapistPairs.set(key, { 
+        patientId: s.patientId, 
+        therapistId: s.therapistId, 
+        sessions: [] 
+      });
+    }
+    patientTherapistPairs.get(key).sessions.push(s);
+  }
+
+  const chatRoomDocs = [];
+  const messageDocs = [];
+
+  for (const [key, pair] of patientTherapistPairs) {
+    // Use the earliest session for this pair
+    const earliestSession = pair.sessions.sort((a, b) => a.scheduledAt - b.scheduledAt)[0];
+    const latestSession = pair.sessions.sort((a, b) => b.scheduledAt - a.scheduledAt)[0];
+    
+    const roomCreatedAt = earliestSession.scheduledAt;
+    const hasCompletedSession = pair.sessions.some(s => s.status === "completed");
+    const expiresAt = hasCompletedSession 
+      ? new Date(latestSession.scheduledAt.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days after last session
+      : null;
+
+    // Determine room status
+    let roomStatus = "active";
+    if (expiresAt && expiresAt < now) {
+      roomStatus = "archived";
+    }
+
+    const chatRoomId = nid();
+    
+    // Generate messages for this chat room (between 3-12 messages)
+    const messageCount = rand(3, 12);
+    const roomMessages = [];
+    let lastMessageAt = null;
+    let lastMessagePreview = null;
+
+    // Add a system message at the start
+    roomMessages.push({
+      _id: nid(),
+      chatRoomId,
+      senderId: pair.therapistId, // System messages attributed to therapist
+      content: "Chat room created. You can now communicate with your therapist.",
+      messageType: "system",
+      isRead: true,
+      readAt: new Date(roomCreatedAt.getTime() + 60000),
+      isDeleted: false,
+      createdAt: roomCreatedAt,
+      updatedAt: roomCreatedAt,
+    });
+
+    for (let m = 0; m < messageCount; m++) {
+      // Alternate between patient and therapist messages
+      const isPatient = m % 2 === 0;
+      const senderId = isPatient ? pair.patientId : pair.therapistId;
+      const content = isPatient ? pick(PATIENT_MESSAGES) : pick(THERAPIST_MESSAGES);
+      
+      // Message created sometime between room creation and now
+      const msgCreatedAt = between(new Date(roomCreatedAt.getTime() + 3600000), now);
+      
+      const msgDoc = {
+        _id: nid(),
+        chatRoomId,
+        senderId,
+        content,
+        messageType: "text",
+        isRead: Math.random() < 0.85, // 85% chance message is read
+        readAt: Math.random() < 0.85 ? new Date(msgCreatedAt.getTime() + rand(60000, 3600000)) : null,
+        isDeleted: false,
+        createdAt: msgCreatedAt,
+        updatedAt: msgCreatedAt,
+      };
+      
+      roomMessages.push(msgDoc);
+    }
+
+    // Sort messages by createdAt
+    roomMessages.sort((a, b) => a.createdAt - b.createdAt);
+    
+    if (roomMessages.length > 0) {
+      const lastMsg = roomMessages[roomMessages.length - 1];
+      lastMessageAt = lastMsg.createdAt;
+      lastMessagePreview = lastMsg.content.substring(0, 100);
+    }
+
+    // Calculate unread counts
+    const patientUnreadCount = roomMessages.filter(m => 
+      m.senderId.toString() !== pair.patientId.toString() && !m.isRead
+    ).length;
+    const therapistUnreadCount = roomMessages.filter(m => 
+      m.senderId.toString() !== pair.therapistId.toString() && !m.isRead
+    ).length;
+
+    chatRoomDocs.push({
+      _id: chatRoomId,
+      patientId: pair.patientId,
+      therapistId: pair.therapistId,
+      sessionId: earliestSession._id,
+      status: roomStatus,
+      lastMessageAt,
+      lastMessagePreview,
+      patientUnreadCount,
+      therapistUnreadCount,
+      expiresAt,
+      createdAt: roomCreatedAt,
+      updatedAt: lastMessageAt || roomCreatedAt,
+    });
+
+    messageDocs.push(...roomMessages);
+  }
+
+  if (chatRoomDocs.length > 0) {
+    await ChatRoom.collection.insertMany(chatRoomDocs);
+  }
+  if (messageDocs.length > 0) {
+    await Message.collection.insertMany(messageDocs);
+  }
+  console.log(`${chatRoomDocs.length} chat rooms with ${messageDocs.length} messages`);
 
   // ── Feedbacks ──────────────────────────────────────────────────────────────
   const RATING_W = [{ v:5,w:38 },{ v:4,w:30 },{ v:3,w:18 },{ v:2,w:9 },{ v:1,w:5 }];
@@ -388,6 +692,9 @@ async function seed() {
   Therapists  : ${tUserDocs.length}  (7 verified, 5 student)
   Patients    : ${pUserDocs.length}  (33 active, 3 inactive)
   Sessions    : ${sessDocs.length}  (${completed.length} completed)
+  Chat Rooms  : ${chatRoomDocs.length}
+  Messages    : ${messageDocs.length}
+  Progress Recs: ${totalProgressRecords}
   Revenue     : Rs ${revenue.toLocaleString()}
   Feedbacks   : ${fbDocs.length}
   Assessments : ${assmDocs.length}
