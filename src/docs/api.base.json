@@ -39,6 +39,30 @@
     {
       "name": "Supervisors",
       "description": "Supervisor profile and student management"
+    },
+    {
+      "name": "Colleges",
+      "description": "College profile and student affiliation"
+    },
+    {
+      "name": "Sessions",
+      "description": "Therapy session booking and management"
+    },
+    {
+      "name": "Assessments",
+      "description": "Patient mental health assessments"
+    },
+    {
+      "name": "Feedbacks",
+      "description": "360-degree feedback system (patient, therapist, supervisor)"
+    },
+    {
+      "name": "Chat",
+      "description": "Real-time messaging between patients and therapists"
+    },
+    {
+      "name": "Video Call",
+      "description": "Video call session management"
     }
   ],
   "paths": {

@@ -39,6 +39,30 @@
     {
       "name": "Supervisors",
       "description": "Supervisor profile and student management"
+    },
+    {
+      "name": "Colleges",
+      "description": "College profile and student affiliation"
+    },
+    {
+      "name": "Sessions",
+      "description": "Therapy session booking and management"
+    },
+    {
+      "name": "Assessments",
+      "description": "Patient mental health assessments"
+    },
+    {
+      "name": "Feedbacks",
+      "description": "360-degree feedback system (patient, therapist, supervisor)"
+    },
+    {
+      "name": "Chat",
+      "description": "Real-time messaging between patients and therapists"
+    },
+    {
+      "name": "Video Call",
+      "description": "Video call session management"
     }
   ],
   "paths": {
@@ -825,6 +849,203 @@
           },
           "401": {
             "description": "Unauthorized or incorrect current password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/detail": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get detailed user information",
+        "description": "Admin only. Retrieves detailed user information including role-specific profile data (patient profile, therapist profile, etc.).",
+        "operationId": "getUserDetail",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "User ID to get details for",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "user": {
+                              "$ref": "#/components/schemas/User"
+                            },
+                            "profile": {
+                              "type": "object",
+                              "description": "Role-specific profile data (patient, therapist, supervisor, or college profile)"
+                            },
+                            "statistics": {
+                              "type": "object",
+                              "description": "User statistics (sessions count, feedback count, etc.)"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/toggle-active": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Toggle user active status",
+        "description": "Admin only. Activates or deactivates a user account. Deactivated users cannot log in.",
+        "operationId": "toggleUserActive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "User ID to toggle active status",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User active status toggled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "user": {
+                              "$ref": "#/components/schemas/User"
+                            },
+                            "isActive": {
+                              "type": "boolean",
+                              "description": "New active status",
+                              "example": false
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Cannot deactivate your own account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -4016,6 +4237,446 @@
         }
       }
     },
+    "/api/v1/sessions/{id}/accept": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Accept a pending session",
+        "description": "Therapist accepts a pending session request from a patient. Changes session status from 'pending' to 'confirmed'.",
+        "operationId": "acceptSession",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Session ID to accept",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Session is not in pending status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only the assigned therapist can accept",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{id}/reject": {
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Reject a pending session",
+        "description": "Therapist rejects a pending session request from a patient. Changes session status from 'pending' to 'rejected'.",
+        "operationId": "rejectSession",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Session ID to reject",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Schedule conflict - please try another time slot",
+                    "description": "Optional reason for rejection"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session rejected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Session"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Session is not in pending status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only the assigned therapist can reject",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/therapist/pending": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get pending sessions for therapist",
+        "description": "Retrieves all pending session requests for the authenticated therapist. These are sessions waiting for therapist approval.",
+        "operationId": "getPendingSessions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending sessions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "sessions": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Session"
+                              }
+                            },
+                            "pagination": {
+                              "type": "object",
+                              "properties": {
+                                "page": {
+                                  "type": "integer",
+                                  "example": 1
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "example": 10
+                                },
+                                "total": {
+                                  "type": "integer",
+                                  "example": 5
+                                },
+                                "totalPages": {
+                                  "type": "integer",
+                                  "example": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only therapists can access this endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/therapist/{therapistId}/booked-slots": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get therapist's booked time slots",
+        "description": "Retrieves all booked time slots for a specific therapist within a date range. Useful for checking availability when booking sessions.",
+        "operationId": "getTherapistBookedSlots",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "description": "Therapist's user ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439012"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date for the range (defaults to today)",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-11-25"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date for the range (defaults to 30 days from start)",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-12-25"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booked slots retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapistId": {
+                              "type": "string",
+                              "format": "objectId",
+                              "example": "507f1f77bcf86cd799439012"
+                            },
+                            "bookedSlots": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2025-11-25"
+                                  },
+                                  "startTime": {
+                                    "type": "string",
+                                    "example": "14:00"
+                                  },
+                                  "endTime": {
+                                    "type": "string",
+                                    "example": "15:00"
+                                  },
+                                  "sessionId": {
+                                    "type": "string",
+                                    "format": "objectId",
+                                    "example": "507f1f77bcf86cd799439011"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sessions/therapist/statistics": {
       "get": {
         "tags": [
@@ -5144,6 +5805,1160 @@
           }
         }
       }
+    },
+    "/api/v1/colleges/profile": {
+      "post": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Create college profile",
+        "description": "Create a detailed college/institution profile with affiliation information",
+        "operationId": "createCollegeProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "institutionName",
+                  "affiliationNumber"
+                ],
+                "properties": {
+                  "institutionName": {
+                    "type": "string",
+                    "description": "Official name of the institution",
+                    "example": "National Institute of Mental Health"
+                  },
+                  "affiliationNumber": {
+                    "type": "string",
+                    "description": "Official registration / affiliation number (must be unique)",
+                    "example": "NIMH-2024-001"
+                  },
+                  "address": {
+                    "type": "string",
+                    "description": "Full address of the institution",
+                    "example": "123 University Road, City"
+                  },
+                  "contactPhone": {
+                    "type": "string",
+                    "description": "Contact phone number",
+                    "example": "+91-9876543210"
+                  },
+                  "website": {
+                    "type": "string",
+                    "description": "Official website URL",
+                    "example": "https://nimh.edu.in"
+                  },
+                  "contactPersonName": {
+                    "type": "string",
+                    "description": "Name of the designated contact person",
+                    "example": "Dr. Sharma"
+                  },
+                  "contactPersonEmail": {
+                    "type": "string",
+                    "description": "Email of the contact person",
+                    "example": "sharma@nimh.edu.in"
+                  },
+                  "department": {
+                    "type": "string",
+                    "description": "Department managing the internship programme",
+                    "example": "Department of Psychiatry"
+                  },
+                  "agreementStartDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "MOU / agreement start date",
+                    "example": "2024-01-01"
+                  },
+                  "agreementEndDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "MOU / agreement end date",
+                    "example": "2025-12-31"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "College profile created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/College"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "403": {
+            "description": "Only college users can create college profiles"
+          },
+          "409": {
+            "description": "Profile or affiliation number already exists"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Update college profile",
+        "description": "Update existing college profile information",
+        "operationId": "updateCollegeProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "institutionName": {
+                    "type": "string"
+                  },
+                  "affiliationNumber": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "contactPhone": {
+                    "type": "string"
+                  },
+                  "website": {
+                    "type": "string"
+                  },
+                  "contactPersonName": {
+                    "type": "string"
+                  },
+                  "contactPersonEmail": {
+                    "type": "string"
+                  },
+                  "department": {
+                    "type": "string"
+                  },
+                  "agreementStartDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "agreementEndDate": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "College profile updated successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "404": {
+            "description": "College profile not found"
+          },
+          "409": {
+            "description": "Affiliation number already registered"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Delete college profile",
+        "description": "Delete the authenticated college's profile",
+        "operationId": "deleteCollegeProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "College profile deleted successfully"
+          },
+          "404": {
+            "description": "College profile not found"
+          }
+        }
+      }
+    },
+    "/api/v1/colleges": {
+      "get": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Get all colleges",
+        "description": "Fetch all college profiles with optional search and pagination",
+        "operationId": "getAllColleges",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search by name, email, institution name, affiliation number, or department",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colleges fetched successfully"
+          }
+        }
+      }
+    },
+    "/api/v1/colleges/me": {
+      "get": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Get my college profile",
+        "description": "Get the authenticated college user's profile",
+        "operationId": "getMyCollegeProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profile fetched successfully"
+          },
+          "404": {
+            "description": "College profile not found"
+          }
+        }
+      }
+    },
+    "/api/v1/colleges/{id}": {
+      "get": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Get college by ID",
+        "description": "Get a specific college profile by its ID",
+        "operationId": "getCollegeById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "College profile ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "College fetched successfully"
+          },
+          "404": {
+            "description": "College not found"
+          }
+        }
+      }
+    },
+    "/api/v1/colleges/students/{studentId}": {
+      "post": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Add student to college",
+        "description": "Add a student therapist (intern) to the college's affiliated students list",
+        "operationId": "addStudentToCollege",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID of the student (therapist) to add"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student added to college successfully"
+          },
+          "404": {
+            "description": "Student therapist or college profile not found"
+          },
+          "409": {
+            "description": "Student is already affiliated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Colleges"
+        ],
+        "summary": "Remove student from college",
+        "description": "Remove a student therapist from the college's affiliated students list",
+        "operationId": "removeStudentFromCollege",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "User ID of the student to remove"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Student removed from college successfully"
+          },
+          "404": {
+            "description": "Student not affiliated or college profile not found"
+          }
+        }
+      }
+    },
+    "/api/v1/chat/rooms": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Get all chat rooms",
+        "description": "Retrieves all chat rooms for the current user (patient or therapist). Returns rooms sorted by last message time.",
+        "operationId": "getChatRooms",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of chat rooms retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ChatRoom"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/unread-count": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Get total unread message count",
+        "description": "Returns the total number of unread messages across all chat rooms for the current user.",
+        "operationId": "getUnreadCount",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unread count retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "unreadCount": {
+                              "type": "integer",
+                              "example": 5
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/validate-access": {
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Validate chat access",
+        "description": "Validates whether the current user has access to chat. Used primarily for WebSocket authentication.",
+        "operationId": "validateChatAccess",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Access validated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "valid": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "userId": {
+                              "type": "string",
+                              "format": "objectId",
+                              "example": "507f1f77bcf86cd799439011"
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "patient",
+                                "therapist"
+                              ],
+                              "example": "patient"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User role not allowed for chat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/room/{otherUserId}": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Get or create chat room",
+        "description": "Gets an existing chat room with another user or creates a new one if it doesn't exist. Only works between patients and therapists who have an active session.",
+        "operationId": "getOrCreateChatRoom",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "otherUserId",
+            "in": "path",
+            "required": true,
+            "description": "User ID of the other participant (therapist if current user is patient, or vice versa)",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439012"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat room retrieved or created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/ChatRoom"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid user ID or no active session exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No valid booking exists between users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/room/{roomId}/messages": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Get messages in a chat room",
+        "description": "Retrieves paginated messages from a chat room. Messages are returned in reverse chronological order (newest first).",
+        "operationId": "getMessages",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "Chat room ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439013"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of messages per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "example": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "messages": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Message"
+                              }
+                            },
+                            "pagination": {
+                              "type": "object",
+                              "properties": {
+                                "page": {
+                                  "type": "integer",
+                                  "example": 1
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "example": 50
+                                },
+                                "total": {
+                                  "type": "integer",
+                                  "example": 120
+                                },
+                                "totalPages": {
+                                  "type": "integer",
+                                  "example": 3
+                                },
+                                "hasMore": {
+                                  "type": "boolean",
+                                  "example": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this chat room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Chat room not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Send a message",
+        "description": "Sends a message in a chat room. This is a REST fallback for sending messages (WebSocket is preferred for real-time messaging).",
+        "operationId": "sendMessage",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "Chat room ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439013"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "maxLength": 5000,
+                    "example": "Hello, how are you feeling today?",
+                    "description": "Message content"
+                  },
+                  "messageType": {
+                    "type": "string",
+                    "enum": [
+                      "text",
+                      "system",
+                      "file"
+                    ],
+                    "default": "text",
+                    "example": "text",
+                    "description": "Type of message"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Message"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Message content is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this chat room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Chat room not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/room/{roomId}/read": {
+      "put": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Mark messages as read",
+        "description": "Marks all unread messages in a chat room as read for the current user. Updates the unread count for the room.",
+        "operationId": "markMessagesAsRead",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "Chat room ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439013"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages marked as read successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "markedCount": {
+                              "type": "integer",
+                              "description": "Number of messages marked as read",
+                              "example": 5
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this chat room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Chat room not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/video-call/{sessionId}/token": {
+      "get": {
+        "tags": [
+          "Video Call"
+        ],
+        "summary": "Get video call token",
+        "description": "Retrieves peer IDs and session information needed to join a video call. Only participants of the session (patient or therapist) can access this endpoint.",
+        "operationId": "getVideoCallToken",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "description": "Session ID for which to get video call credentials",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video call token retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "sessionId": {
+                              "type": "string",
+                              "format": "objectId",
+                              "description": "Session ID",
+                              "example": "507f1f77bcf86cd799439011"
+                            },
+                            "myPeerId": {
+                              "type": "string",
+                              "description": "Current user's peer ID for WebRTC connection",
+                              "example": "peer_507f1f77bcf86cd799439012"
+                            },
+                            "remotePeerId": {
+                              "type": "string",
+                              "description": "Other participant's peer ID for WebRTC connection",
+                              "example": "peer_507f1f77bcf86cd799439013"
+                            },
+                            "session": {
+                              "type": "object",
+                              "description": "Session details",
+                              "properties": {
+                                "_id": {
+                                  "type": "string",
+                                  "format": "objectId",
+                                  "example": "507f1f77bcf86cd799439011"
+                                },
+                                "patientId": {
+                                  "type": "string",
+                                  "format": "objectId",
+                                  "example": "507f1f77bcf86cd799439012"
+                                },
+                                "therapistId": {
+                                  "type": "string",
+                                  "format": "objectId",
+                                  "example": "507f1f77bcf86cd799439013"
+                                },
+                                "scheduledAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "example": "2025-11-25T14:00:00.000Z"
+                                },
+                                "duration": {
+                                  "type": "integer",
+                                  "example": 60
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "confirmed",
+                                    "scheduled"
+                                  ],
+                                  "example": "confirmed"
+                                }
+                              }
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": [
+                                "patient",
+                                "therapist"
+                              ],
+                              "description": "Current user's role in the session",
+                              "example": "patient"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Session is not in a valid state for video call",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5587,17 +7402,28 @@
         "properties": {
           "_id": {
             "type": "string",
-            "format": "objectId"
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439011"
           },
           "fullName": {
-            "type": "string"
+            "type": "string",
+            "example": "John Doe"
           },
           "email": {
             "type": "string",
-            "format": "email"
+            "format": "email",
+            "example": "john@example.com"
           },
-          "phoneNumber": {
-            "type": "string"
+          "role": {
+            "type": "string",
+            "enum": [
+              "patient",
+              "therapist",
+              "supervisor",
+              "admin",
+              "college"
+            ],
+            "example": "patient"
           }
         }
       },
@@ -5744,6 +7570,165 @@
             "format": "date-time"
           }
         }
+      },
+      "ChatRoom": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439013"
+          },
+          "patientId": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "objectId"
+              },
+              {
+                "$ref": "#/components/schemas/UserBasic"
+              }
+            ],
+            "description": "Patient user (may be populated)"
+          },
+          "therapistId": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "objectId"
+              },
+              {
+                "$ref": "#/components/schemas/UserBasic"
+              }
+            ],
+            "description": "Therapist user (may be populated)"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "objectId",
+            "description": "Reference to the session that created this chat room",
+            "example": "507f1f77bcf86cd799439014"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "closed"
+            ],
+            "default": "active",
+            "example": "active"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-11-20T14:30:00.000Z"
+          },
+          "lastMessagePreview": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "example": "Thank you for today's session..."
+          },
+          "patientUnreadCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 2
+          },
+          "therapistUnreadCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 0
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Chat expiry date (30 days after last session)",
+            "example": "2025-12-20T14:30:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-01T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-20T14:30:00.000Z"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439015"
+          },
+          "chatRoomId": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439013"
+          },
+          "senderId": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "objectId"
+              },
+              {
+                "$ref": "#/components/schemas/UserBasic"
+              }
+            ],
+            "description": "Sender user (may be populated)"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 5000,
+            "example": "Hello, how are you feeling today?"
+          },
+          "messageType": {
+            "type": "string",
+            "enum": [
+              "text",
+              "system",
+              "file"
+            ],
+            "default": "text",
+            "example": "text"
+          },
+          "isRead": {
+            "type": "boolean",
+            "default": false,
+            "example": true
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-11-20T14:35:00.000Z"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-20T14:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-20T14:30:00.000Z"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -5758,6 +7743,333 @@
         "in": "cookie",
         "name": "accessToken",
         "description": "JWT token stored in HTTP-only cookie"
+      }
+    },
+    "/api/v1/therapists/me": {
+      "get": {
+        "tags": [
+          "Therapists"
+        ],
+        "summary": "Get my therapist profile",
+        "description": "Retrieves the therapist profile for the currently authenticated therapist user.",
+        "operationId": "getMyTherapistProfile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Therapist profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Therapist"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only therapists can access this endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist profile not found - Profile not yet created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/students": {
+      "get": {
+        "tags": [
+          "Therapists"
+        ],
+        "summary": "Get students under supervisor",
+        "description": "Supervisor only. Retrieves all student therapists under the supervisor's supervision.",
+        "operationId": "getStudentsUnderSupervisor",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          },
+          {
+            "name": "verificationStatus",
+            "in": "query",
+            "description": "Filter by verification status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "verified",
+                "rejected"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Students retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Therapist"
+                              }
+                            },
+                            "pagination": {
+                              "type": "object",
+                              "properties": {
+                                "page": {
+                                  "type": "integer",
+                                  "example": 1
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "example": 10
+                                },
+                                "total": {
+                                  "type": "integer",
+                                  "example": 5
+                                },
+                                "totalPages": {
+                                  "type": "integer",
+                                  "example": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only supervisors can access this endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Supervisor profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/verify/{id}": {
+      "put": {
+        "tags": [
+          "Therapists"
+        ],
+        "summary": "Verify therapist",
+        "description": "Supervisor only. Verifies or rejects a student therapist's profile.",
+        "operationId": "verifyTherapist",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Therapist profile ID to verify",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "verified",
+                      "rejected"
+                    ],
+                    "example": "verified",
+                    "description": "New verification status"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Documents verified successfully",
+                    "description": "Reason for verification decision"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Therapist verification status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/Therapist"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid status value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only supervisors can verify therapists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },

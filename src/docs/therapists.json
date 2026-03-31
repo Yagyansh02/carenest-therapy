@@ -569,6 +569,262 @@
           }
         ]
       }
+    },
+    "/api/v1/therapists/me": {
+      "get": {
+        "tags": ["Therapists"],
+        "summary": "Get my therapist profile",
+        "description": "Retrieves the therapist profile for the currently authenticated therapist user.",
+        "operationId": "getMyTherapistProfile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Therapist profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Therapist" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only therapists can access this endpoint",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist profile not found - Profile not yet created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/students": {
+      "get": {
+        "tags": ["Therapists"],
+        "summary": "Get students under supervisor",
+        "description": "Supervisor only. Retrieves all student therapists under the supervisor's supervision.",
+        "operationId": "getStudentsUnderSupervisor",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          },
+          {
+            "name": "verificationStatus",
+            "in": "query",
+            "description": "Filter by verification status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "verified", "rejected"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Students retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "students": {
+                              "type": "array",
+                              "items": { "$ref": "#/components/schemas/Therapist" }
+                            },
+                            "pagination": {
+                              "type": "object",
+                              "properties": {
+                                "page": { "type": "integer", "example": 1 },
+                                "limit": { "type": "integer", "example": 10 },
+                                "total": { "type": "integer", "example": 5 },
+                                "totalPages": { "type": "integer", "example": 1 }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only supervisors can access this endpoint",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Supervisor profile not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/therapists/verify/{id}": {
+      "put": {
+        "tags": ["Therapists"],
+        "summary": "Verify therapist",
+        "description": "Supervisor only. Verifies or rejects a student therapist's profile.",
+        "operationId": "verifyTherapist",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Therapist profile ID to verify",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["verified", "rejected"],
+                    "example": "verified",
+                    "description": "New verification status"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Documents verified successfully",
+                    "description": "Reason for verification decision"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Therapist verification status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Therapist" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid status value",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only supervisors can verify therapists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist profile not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

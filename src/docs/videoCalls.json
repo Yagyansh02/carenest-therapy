@@ -1,0 +1,139 @@
+{
+  "paths": {
+    "/api/v1/video-call/{sessionId}/token": {
+      "get": {
+        "tags": ["Video Call"],
+        "summary": "Get video call token",
+        "description": "Retrieves peer IDs and session information needed to join a video call. Only participants of the session (patient or therapist) can access this endpoint.",
+        "operationId": "getVideoCallToken",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "description": "Session ID for which to get video call credentials",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Video call token retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "sessionId": {
+                              "type": "string",
+                              "format": "objectId",
+                              "description": "Session ID",
+                              "example": "507f1f77bcf86cd799439011"
+                            },
+                            "myPeerId": {
+                              "type": "string",
+                              "description": "Current user's peer ID for WebRTC connection",
+                              "example": "peer_507f1f77bcf86cd799439012"
+                            },
+                            "remotePeerId": {
+                              "type": "string",
+                              "description": "Other participant's peer ID for WebRTC connection",
+                              "example": "peer_507f1f77bcf86cd799439013"
+                            },
+                            "session": {
+                              "type": "object",
+                              "description": "Session details",
+                              "properties": {
+                                "_id": {
+                                  "type": "string",
+                                  "format": "objectId",
+                                  "example": "507f1f77bcf86cd799439011"
+                                },
+                                "patientId": {
+                                  "type": "string",
+                                  "format": "objectId",
+                                  "example": "507f1f77bcf86cd799439012"
+                                },
+                                "therapistId": {
+                                  "type": "string",
+                                  "format": "objectId",
+                                  "example": "507f1f77bcf86cd799439013"
+                                },
+                                "scheduledAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "example": "2025-11-25T14:00:00.000Z"
+                                },
+                                "duration": {
+                                  "type": "integer",
+                                  "example": 60
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": ["confirmed", "scheduled"],
+                                  "example": "confirmed"
+                                }
+                              }
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": ["patient", "therapist"],
+                              "description": "Current user's role in the session",
+                              "example": "patient"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Session is not in a valid state for video call",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this session",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

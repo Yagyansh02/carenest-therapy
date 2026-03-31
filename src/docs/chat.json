@@ -1,0 +1,670 @@
+{
+  "paths": {
+    "/api/v1/chat/rooms": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get all chat rooms",
+        "description": "Retrieves all chat rooms for the current user (patient or therapist). Returns rooms sorted by last message time.",
+        "operationId": "getChatRooms",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "List of chat rooms retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": { "$ref": "#/components/schemas/ChatRoom" }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/unread-count": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get total unread message count",
+        "description": "Returns the total number of unread messages across all chat rooms for the current user.",
+        "operationId": "getUnreadCount",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Unread count retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "unreadCount": {
+                              "type": "integer",
+                              "example": 5
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/validate-access": {
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Validate chat access",
+        "description": "Validates whether the current user has access to chat. Used primarily for WebSocket authentication.",
+        "operationId": "validateChatAccess",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Access validated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "valid": {
+                              "type": "boolean",
+                              "example": true
+                            },
+                            "userId": {
+                              "type": "string",
+                              "format": "objectId",
+                              "example": "507f1f77bcf86cd799439011"
+                            },
+                            "role": {
+                              "type": "string",
+                              "enum": ["patient", "therapist"],
+                              "example": "patient"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User role not allowed for chat",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/room/{otherUserId}": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get or create chat room",
+        "description": "Gets an existing chat room with another user or creates a new one if it doesn't exist. Only works between patients and therapists who have an active session.",
+        "operationId": "getOrCreateChatRoom",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "otherUserId",
+            "in": "path",
+            "required": true,
+            "description": "User ID of the other participant (therapist if current user is patient, or vice versa)",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439012"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Chat room retrieved or created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ChatRoom" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid user ID or no active session exists",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - No valid booking exists between users",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/room/{roomId}/messages": {
+      "get": {
+        "tags": ["Chat"],
+        "summary": "Get messages in a chat room",
+        "description": "Retrieves paginated messages from a chat room. Messages are returned in reverse chronological order (newest first).",
+        "operationId": "getMessages",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "Chat room ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439013"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of messages per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50,
+              "example": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "messages": {
+                              "type": "array",
+                              "items": { "$ref": "#/components/schemas/Message" }
+                            },
+                            "pagination": {
+                              "type": "object",
+                              "properties": {
+                                "page": { "type": "integer", "example": 1 },
+                                "limit": { "type": "integer", "example": 50 },
+                                "total": { "type": "integer", "example": 120 },
+                                "totalPages": { "type": "integer", "example": 3 },
+                                "hasMore": { "type": "boolean", "example": true }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this chat room",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Chat room not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Chat"],
+        "summary": "Send a message",
+        "description": "Sends a message in a chat room. This is a REST fallback for sending messages (WebSocket is preferred for real-time messaging).",
+        "operationId": "sendMessage",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "Chat room ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439013"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "maxLength": 5000,
+                    "example": "Hello, how are you feeling today?",
+                    "description": "Message content"
+                  },
+                  "messageType": {
+                    "type": "string",
+                    "enum": ["text", "system", "file"],
+                    "default": "text",
+                    "example": "text",
+                    "description": "Type of message"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Message" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Message content is required",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this chat room",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Chat room not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/chat/room/{roomId}/read": {
+      "put": {
+        "tags": ["Chat"],
+        "summary": "Mark messages as read",
+        "description": "Marks all unread messages in a chat room as read for the current user. Updates the unread count for the room.",
+        "operationId": "markMessagesAsRead",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "Chat room ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439013"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Messages marked as read successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "markedCount": {
+                              "type": "integer",
+                              "description": "Number of messages marked as read",
+                              "example": 5
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - User is not a participant of this chat room",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Chat room not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChatRoom": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439013"
+          },
+          "patientId": {
+            "oneOf": [
+              { "type": "string", "format": "objectId" },
+              { "$ref": "#/components/schemas/UserBasic" }
+            ],
+            "description": "Patient user (may be populated)"
+          },
+          "therapistId": {
+            "oneOf": [
+              { "type": "string", "format": "objectId" },
+              { "$ref": "#/components/schemas/UserBasic" }
+            ],
+            "description": "Therapist user (may be populated)"
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "objectId",
+            "description": "Reference to the session that created this chat room",
+            "example": "507f1f77bcf86cd799439014"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "archived", "closed"],
+            "default": "active",
+            "example": "active"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-11-20T14:30:00.000Z"
+          },
+          "lastMessagePreview": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true,
+            "example": "Thank you for today's session..."
+          },
+          "patientUnreadCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 2
+          },
+          "therapistUnreadCount": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "example": 0
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Chat expiry date (30 days after last session)",
+            "example": "2025-12-20T14:30:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-01T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-20T14:30:00.000Z"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439015"
+          },
+          "chatRoomId": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439013"
+          },
+          "senderId": {
+            "oneOf": [
+              { "type": "string", "format": "objectId" },
+              { "$ref": "#/components/schemas/UserBasic" }
+            ],
+            "description": "Sender user (may be populated)"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 5000,
+            "example": "Hello, how are you feeling today?"
+          },
+          "messageType": {
+            "type": "string",
+            "enum": ["text", "system", "file"],
+            "default": "text",
+            "example": "text"
+          },
+          "isRead": {
+            "type": "boolean",
+            "default": false,
+            "example": true
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "example": "2025-11-20T14:35:00.000Z"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-20T14:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-11-20T14:30:00.000Z"
+          }
+        }
+      },
+      "UserBasic": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "format": "objectId",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["patient", "therapist", "supervisor", "admin", "college"],
+            "example": "patient"
+          }
+        }
+      }
+    }
+  }
+}

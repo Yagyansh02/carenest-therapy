@@ -38,7 +38,35 @@ app.use(cors(
         credentials: true
     }
 ));
-app.use(helmet());
+
+// Helmet with custom CSP - allow Scalar docs to work
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'", // Required for Scalar inline scripts
+        "https://cdn.jsdelivr.net", // Scalar CDN
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'", // Required for Scalar inline styles
+        "https://fonts.googleapis.com",
+        "https://cdn.jsdelivr.net",
+      ],
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com",
+        "https://cdn.jsdelivr.net",
+      ],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'"],
+      frameSrc: ["'self'"],
+    },
+  },
+}));
+
 app.use(express.json({limit : "16kb"}))
 app.use(express.urlencoded({extended : true,limit : "16kb"}))
 app.use(express.static("public"));

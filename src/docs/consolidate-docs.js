@@ -31,6 +31,8 @@ const FEATURE_FILES = [
   'sessions.json',
   'feedbacks.json',
   'colleges.json',
+  'chat.json',
+  'videoCalls.json',
   // Add more feature files here as you create them
 ];
 

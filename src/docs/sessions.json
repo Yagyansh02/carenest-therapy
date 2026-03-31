@@ -1012,6 +1012,372 @@
         }
       }
     },
+    "/api/v1/sessions/{id}/accept": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Accept a pending session",
+        "description": "Therapist accepts a pending session request from a patient. Changes session status from 'pending' to 'confirmed'.",
+        "operationId": "acceptSession",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Session ID to accept",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Session" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Session is not in pending status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only the assigned therapist can accept",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/{id}/reject": {
+      "post": {
+        "tags": ["Sessions"],
+        "summary": "Reject a pending session",
+        "description": "Therapist rejects a pending session request from a patient. Changes session status from 'pending' to 'rejected'.",
+        "operationId": "rejectSession",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Session ID to reject",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439011"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Schedule conflict - please try another time slot",
+                    "description": "Optional reason for rejection"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Session rejected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/Session" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Session is not in pending status",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only the assigned therapist can reject",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/therapist/pending": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get pending sessions for therapist",
+        "description": "Retrieves all pending session requests for the authenticated therapist. These are sessions waiting for therapist approval.",
+        "operationId": "getPendingSessions",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "example": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending sessions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "sessions": {
+                              "type": "array",
+                              "items": { "$ref": "#/components/schemas/Session" }
+                            },
+                            "pagination": {
+                              "type": "object",
+                              "properties": {
+                                "page": { "type": "integer", "example": 1 },
+                                "limit": { "type": "integer", "example": 10 },
+                                "total": { "type": "integer", "example": 5 },
+                                "totalPages": { "type": "integer", "example": 1 }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Only therapists can access this endpoint",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sessions/therapist/{therapistId}/booked-slots": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get therapist's booked time slots",
+        "description": "Retrieves all booked time slots for a specific therapist within a date range. Useful for checking availability when booking sessions.",
+        "operationId": "getTherapistBookedSlots",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "therapistId",
+            "in": "path",
+            "required": true,
+            "description": "Therapist's user ID",
+            "schema": {
+              "type": "string",
+              "format": "objectId",
+              "example": "507f1f77bcf86cd799439012"
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "description": "Start date for the range (defaults to today)",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-11-25"
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "description": "End date for the range (defaults to 30 days from start)",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2025-12-25"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booked slots retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/ApiResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "therapistId": {
+                              "type": "string",
+                              "format": "objectId",
+                              "example": "507f1f77bcf86cd799439012"
+                            },
+                            "bookedSlots": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "example": "2025-11-25"
+                                  },
+                                  "startTime": {
+                                    "type": "string",
+                                    "example": "14:00"
+                                  },
+                                  "endTime": {
+                                    "type": "string",
+                                    "example": "15:00"
+                                  },
+                                  "sessionId": {
+                                    "type": "string",
+                                    "format": "objectId",
+                                    "example": "507f1f77bcf86cd799439011"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "404": {
+            "description": "Therapist not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sessions/therapist/statistics": {
       "get": {
         "tags": ["Sessions"],
