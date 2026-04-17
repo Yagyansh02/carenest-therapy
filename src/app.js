@@ -6,6 +6,8 @@ import helmet from "helmet";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { rateLimit } from "./middlewares/arcjet.middleware.js";
+import { generalRateLimiter } from "./utils/arcjet.config.js";
 
 const app = express();
 
@@ -86,6 +88,9 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Apply Arcjet rate limiting globally to all API routes
+app.use("/api", rateLimit(generalRateLimiter));
 
 // routes import
 import userRouter from './routes/user.routes.js';

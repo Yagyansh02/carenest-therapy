@@ -198,7 +198,7 @@ async function seed() {
     ChatRoom.deleteMany({}), Message.deleteMany({}),
   ]);
 
-  const pw  = await bcrypt.hash("Password@123", 10);
+  const pw  = await bcrypt.hash("123456", 10);
   const now = new Date();
 
   // ── Admin ──────────────────────────────────────────────────────────────────
@@ -699,7 +699,7 @@ async function seed() {
   Feedbacks   : ${fbDocs.length}
   Assessments : ${assmDocs.length}
 =========================================
-  Password for all accounts : Password@123
+  Password for all accounts : 123456
   Admin login               : admin@carenest.dev
 =========================================
 `);

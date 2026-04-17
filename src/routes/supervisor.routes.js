@@ -8,8 +8,9 @@ import {
   addStudentToSupervision,
   removeStudentFromSupervision,
   deleteSupervisorProfile,
+  getStudentSessionsWithFeedback,
 } from "../controllers/supervisor.controllers.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT, verifyRole } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
@@ -31,7 +32,8 @@ router.route("/profile").delete(deleteSupervisorProfile);
 router.route("/:id").get(getSupervisorById);
 
 // Student supervision management
-router.route("/students/:studentId").post(addStudentToSupervision);
-router.route("/students/:studentId").delete(removeStudentFromSupervision);
+router.route("/students/:studentId").post(verifyRole("supervisor", "admin"), addStudentToSupervision);
+router.route("/students/:studentId").delete(verifyRole("supervisor", "admin"), removeStudentFromSupervision);
+router.route("/students/:studentId/sessions").get(verifyRole("supervisor", "admin"), getStudentSessionsWithFeedback);
 
 export default router;

@@ -1,5 +1,7 @@
 import { Supervisor } from "../models/supervisor.models.js";
 import { User } from "../models/user.models.js";
+import { Session } from "../models/session.model.js";
+import { Feedback } from "../models/feedback.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -371,6 +373,81 @@ const deleteSupervisorProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Supervisor profile deleted successfully"));
 });
 
+/**
+ * Get student's sessions along with feedback (Supervisor only)
+ * @route GET /api/v1/supervisors/students/:studentId/sessions
+ * @access Private (Supervisor only)
+ */
+const getStudentSessionsWithFeedback = asyncHandler(async (req, res) => {
+  const { studentId } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
+  // Find supervisor profile
+  const supervisorProfile = await Supervisor.findOne({ userId: req.user._id });
+  if (!supervisorProfile) {
+    throw new ApiError(404, "Supervisor profile not found");
+  }
+
+  // Check if student is in supervision list
+  if (!supervisorProfile.supervisedStudents.some(id => id.toString() === studentId)) {
+    throw new ApiError(403, "Not authorized to view this student's data");
+  }
+
+  const pageNum = parseInt(page, 10) || 1;
+  const limitNum = parseInt(limit, 10) || 10;
+  const skip = (pageNum - 1) * limitNum;
+
+  // Fetch student's sessions
+  const sessions = await Session.find({ therapistId: studentId })
+    .sort({ scheduledAt: -1 })
+    .skip(skip)
+    .limit(limitNum)
+    .populate("patientId", "fullName email avatar");
+
+  const totalSessions = await Session.countDocuments({ therapistId: studentId });
+
+  // Get feedback for these sessions
+  const sessionIds = sessions.map(s => s._id);
+  
+  const feedbacks = await Feedback.find({
+    sessionId: { $in: sessionIds }
+  });
+
+  // Attach feedback to sessions
+  const sessionsWithFeedback = sessions.map(session => {
+    const sessionObj = session.toObject();
+    
+    // Find feedbacks for this specific session
+    sessionObj.patientFeedback = feedbacks.find(
+      f => f.sessionId.toString() === session._id.toString() && 
+           f.feedbackType === "patient-to-therapist"
+    ) || null;
+    
+    sessionObj.therapistFeedback = feedbacks.find(
+      f => f.sessionId.toString() === session._id.toString() && 
+           f.feedbackType === "therapist-to-patient"
+    ) || null;
+    
+    return sessionObj;
+  });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        sessions: sessionsWithFeedback,
+        pagination: {
+          currentPage: pageNum,
+          totalPages: Math.ceil(totalSessions / limitNum),
+          totalSessions,
+          hasMore: skip + sessions.length < totalSessions,
+        }
+      },
+      "Student sessions and feedback fetched successfully"
+    )
+  );
+});
+
 export {
   createSupervisorProfile,
   updateSupervisorProfile,
@@ -380,4 +457,5 @@ export {
   addStudentToSupervision,
   removeStudentFromSupervision,
   deleteSupervisorProfile,
+  getStudentSessionsWithFeedback,
 };
