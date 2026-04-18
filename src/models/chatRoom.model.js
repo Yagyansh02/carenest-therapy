@@ -94,14 +94,11 @@ const chatRoomSchema = new Schema(
   }
 );
 
-// Compound index for finding chat room between patient and therapist
-chatRoomSchema.index({ patientId: 1, therapistId: 1 });
-chatRoomSchema.index({ status: 1, lastMessageAt: -1 });
-
-// Ensure unique chat room per patient-therapist pair
+// Compound index for finding chat room between patient and therapist (unique)
 chatRoomSchema.index(
   { patientId: 1, therapistId: 1 },
   { unique: true }
 );
+chatRoomSchema.index({ status: 1, lastMessageAt: -1 });
 
 export const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);

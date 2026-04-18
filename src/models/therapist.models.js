@@ -109,4 +109,10 @@ const therapistProfileSchema = new Schema(
   }
 );
 
+// Compound indexes for efficient filter/sort queries
+therapistProfileSchema.index({ verificationStatus: 1, averageRating: -1 });
+therapistProfileSchema.index({ specializations: 1 });
+therapistProfileSchema.index({ sessionRate: 1 });
+therapistProfileSchema.index({ yearsOfExperience: -1 });
+
 export const Therapist = mongoose.model("Therapist", therapistProfileSchema);

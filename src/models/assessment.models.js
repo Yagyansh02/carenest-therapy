@@ -102,4 +102,8 @@ const assessmentSchema = new Schema(
   { timestamps: true }
 );
 
+// Compound index for sorted queries
+assessmentSchema.index({ patientId: 1, createdAt: -1 });
+assessmentSchema.index({ createdAt: -1 });
+
 export const Assessment = mongoose.model("Assessment", assessmentSchema);

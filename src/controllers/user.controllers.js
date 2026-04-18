@@ -7,6 +7,8 @@ import { Patient } from "../models/patient.models.js";
 import { Therapist } from "../models/therapist.models.js";
 import { Session } from "../models/session.model.js";
 import { College } from "../models/college.models.js";
+import { invalidateUserCache } from "../middlewares/auth.middleware.js";
+import { getCache, setCache, deleteCache } from "../db/redis.js";
 
 /**
  * Cookie options for secure token storage
@@ -192,6 +194,9 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
   );
 
+  // Invalidate Redis cache for this user
+  await invalidateUserCache(req.user._id);
+
   // Clear cookies and send response
   return res
     .status(200)
@@ -311,7 +316,7 @@ const changePassword = asyncHandler(async (req, res) => {
  * @access Private (requires authentication and admin role)
  */
 const getAllUsers = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 1000, role } = req.query;
+  const { page = 1, limit = 50, role } = req.query;
   
   // Build query
   const query = {};
@@ -378,6 +383,9 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     { fullName },
     { new: true, runValidators: true }
   ).select("-password -refreshToken");
+
+  // Invalidate cached user data
+  await invalidateUserCache(req.user._id);
   
   res
     .status(200)

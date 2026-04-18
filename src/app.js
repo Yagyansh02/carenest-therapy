@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { rateLimit } from "./middlewares/arcjet.middleware.js";
 import { generalRateLimiter } from "./utils/arcjet.config.js";
+import { performanceTimer } from "./middlewares/cache.middleware.js";
 
 const app = express();
 
@@ -76,6 +77,9 @@ app.use(cookieParser());
 
 // Morgan logging - console for development
 app.use(morgan("dev"));
+
+// Performance measurement middleware
+app.use(performanceTimer());
 
 // Morgan logging - file for production/records
 app.use(morgan("combined", { stream: accessLogStream }));

@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import http from "http";
 import connectDB from "./db/db.js";
+import { connectRedis } from "./db/redis.js";
 import { app } from "./app.js";
 import { setupPeerServer } from "./services/videoService.js";
 import { setupChatServer } from "./services/chatService.js";
@@ -11,6 +12,9 @@ dotenv.config({
 
 connectDB()
   .then(() => {
+    // Connect Redis for caching (non-blocking — app works without it)
+    connectRedis();
+
     const httpServer = http.createServer(app);
 
     // Attach PeerJS signaling server (needs raw http.Server for WebSocket)

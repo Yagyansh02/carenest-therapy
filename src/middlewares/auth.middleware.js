@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { getCache, setCache, deleteCache } from "../db/redis.js";
 
 /**
  * Middleware to verify JWT token and attach authenticated user to request object.
@@ -9,6 +10,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
  * Extracts token from:
  * 1. Authorization header (Bearer token)
  * 2. Cookies (accessToken)
+ * 
+ * Performance: Caches authenticated user in Redis (60s TTL) to avoid
+ * hitting MongoDB on every single authenticated request.
  * 
  * @throws {ApiError} 401 - If token is missing or invalid
  */
@@ -24,12 +28,22 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    const user = await User.findById(decodedToken._id).select(
-      "-password -refreshToken"
-    );
+    // Try Redis cache first — avoids DB hit on every request
+    const cacheKey = `user:${decodedToken._id}`;
+    let user = await getCache(cacheKey);
 
     if (!user) {
-      throw new ApiError(401, "Invalid access token");
+      // Cache miss — fetch from DB and cache for 60 seconds
+      user = await User.findById(decodedToken._id).select(
+        "-password -refreshToken"
+      );
+
+      if (!user) {
+        throw new ApiError(401, "Invalid access token");
+      }
+
+      // Cache the user object (convert Mongoose doc to plain object)
+      await setCache(cacheKey, user.toObject ? user.toObject() : user, 60);
     }
 
     req.user = user;
@@ -38,6 +52,13 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, error?.message || "Invalid access token");
   }
 });
+
+/**
+ * Invalidate cached user data (call after profile update, logout, etc.)
+ */
+export const invalidateUserCache = async (userId) => {
+  await deleteCache(`user:${userId}`);
+};
 
 /**
  * Middleware to verify user has one of the specified roles.

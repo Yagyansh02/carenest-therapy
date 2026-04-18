@@ -109,4 +109,7 @@ const collegeSchema = new Schema(
   }
 );
 
+// Index for filtering by verification status
+collegeSchema.index({ verificationStatus: 1 });
+
 export const College = mongoose.model("College", collegeSchema);
