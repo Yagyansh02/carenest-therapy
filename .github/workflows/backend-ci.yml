@@ -24,4 +24,11 @@ jobs:
       run: npm ci
 
     - name: Run Tests
+      env:
+        NODE_ENV: development
+        ARCJET_ENV: development
+        ACCESS_TOKEN_SECRET: ci-test-access-secret-key-min-32-chars-long
+        REFRESH_TOKEN_SECRET: ci-test-refresh-secret-key-min-32-chars-long
+        ACCESS_TOKEN_EXPIRY: 15m
+        REFRESH_TOKEN_EXPIRY: 7d
       run: npm run test

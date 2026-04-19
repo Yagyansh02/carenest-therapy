@@ -17,6 +17,7 @@ beforeEach(async () => {
 });
 
 describe('User Authentication API', () => {
+    const fakeIp = '127.0.0.1';
     
     describe('POST /api/v1/users/register', () => {
         it('should successfully register a new user', async () => {
@@ -24,11 +25,12 @@ describe('User Authentication API', () => {
                 fullName: 'John Doe',
                 email: 'john@example.com',
                 password: 'Password123!',
-                role: 'user'
+                role: 'patient'
             };
 
             const res = await request(app)
                 .post('/api/v1/users/register')
+                .set('X-Forwarded-For', fakeIp)
                 .send(userData);
 
             expect(res.statusCode).toBe(201);
@@ -43,10 +45,10 @@ describe('User Authentication API', () => {
             const userData = { fullName: 'John Doe', email: 'john@example.com', password: 'Password123!' };
             
             // First registration
-            await request(app).post('/api/v1/users/register').send(userData);
+            await request(app).post('/api/v1/users/register').set('X-Forwarded-For', fakeIp).send(userData);
             
             // Second registration
-            const res = await request(app).post('/api/v1/users/register').send(userData);
+            const res = await request(app).post('/api/v1/users/register').set('X-Forwarded-For', fakeIp).send(userData);
             expect(res.statusCode).toBe(409); // Conflict
         });
     });
@@ -54,10 +56,11 @@ describe('User Authentication API', () => {
     describe('POST /api/v1/users/login', () => {
         it('should successfully login existing user', async () => {
             const userData = { fullName: 'Test Login', email: 'login@test.com', password: 'Password123!' };
-            await request(app).post('/api/v1/users/register').send(userData);
+            await request(app).post('/api/v1/users/register').set('X-Forwarded-For', fakeIp).send(userData);
 
             const res = await request(app)
                 .post('/api/v1/users/login')
+                .set('X-Forwarded-For', fakeIp)
                 .send({ email: userData.email, password: userData.password });
 
             expect(res.statusCode).toBe(200);
@@ -72,7 +75,10 @@ describe('User Authentication API', () => {
 
         beforeEach(async () => {
             const userData = { fullName: 'Auth User', email: 'auth@test.com', password: 'Password123!' };
-            const authRes = await request(app).post('/api/v1/users/register').send(userData);
+            const authRes = await request(app)
+                .post('/api/v1/users/register')
+                .set('X-Forwarded-For', fakeIp)
+                .send(userData);
             accessToken = authRes.body.data.accessToken;
             userId = authRes.body.data.user._id;
         });
@@ -80,7 +86,8 @@ describe('User Authentication API', () => {
         it('GET /api/v1/users/me should return current user', async () => {
             const res = await request(app)
                 .get('/api/v1/users/me')
-                .set('Authorization', `Bearer ${accessToken}`);
+                .set('Authorization', `Bearer ${accessToken}`)
+                .set('X-Forwarded-For', fakeIp);
 
             expect(res.statusCode).toBe(200);
             expect(res.body.data._id).toBe(userId);
@@ -91,14 +98,17 @@ describe('User Authentication API', () => {
             const res = await request(app)
                 .patch('/api/v1/users/profile')
                 .set('Authorization', `Bearer ${accessToken}`)
-                .send({ fullName: 'Updated Name', phone: '1234567890' });
+                .set('X-Forwarded-For', fakeIp)
+                .send({ fullName: 'Updated Name' });
 
             expect(res.statusCode).toBe(200);
             expect(res.body.data.fullName).toBe('Updated Name');
         });
         
         it('should fail /me without token', async () => {
-            const res = await request(app).get('/api/v1/users/me');
+            const res = await request(app)
+                .get('/api/v1/users/me')
+                .set('X-Forwarded-For', fakeIp);
             expect(res.statusCode).toBe(401);
         });
     });

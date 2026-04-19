@@ -2,10 +2,9 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { app } from '../../src/app.js';
 import { connectDB, closeDB, clearDB } from '../utils/db.setup.js';
-// Assuming Session exists correctly
-// import { Session } from '../../src/models/session.models.js';
 
 let appInstance = app;
+const fakeIp = '127.0.0.1';
 
 beforeAll(async () => {
   await connectDB();
@@ -29,7 +28,10 @@ describe('Session API Endpoints', () => {
     beforeEach(async () => {
         // Create Patient
         const patientData = { fullName: 'Test Patient', email: 'patient@test.com', password: 'Password123!', role: 'patient' };
-        const patientRes = await request(appInstance).post('/api/v1/users/register').send(patientData);
+        const patientRes = await request(appInstance)
+            .post('/api/v1/users/register')
+            .set('X-Forwarded-For', fakeIp)
+            .send(patientData);
         if (patientRes.body && patientRes.body.data) {
             mockPatientToken = patientRes.body.data.accessToken;
             mockPatientId = patientRes.body.data.user._id;
@@ -37,7 +39,10 @@ describe('Session API Endpoints', () => {
 
         // Create Therapist
         const therapistData = { fullName: 'Test Therapist', email: 'therapist@test.com', password: 'Password123!', role: 'therapist' };
-        const therapistRes = await request(appInstance).post('/api/v1/users/register').send(therapistData);
+        const therapistRes = await request(appInstance)
+            .post('/api/v1/users/register')
+            .set('X-Forwarded-For', fakeIp)
+            .send(therapistData);
         if (therapistRes.body && therapistRes.body.data) {
             mockTherapistToken = therapistRes.body.data.accessToken;
             mockTherapistId = therapistRes.body.data.user._id;
@@ -46,14 +51,17 @@ describe('Session API Endpoints', () => {
 
     describe('GET /api/v1/sessions', () => {
         it('should return 401 Unauthorized if no token is provided', async () => {
-            const res = await request(appInstance).get('/api/v1/sessions');
+            const res = await request(appInstance)
+                .get('/api/v1/sessions')
+                .set('X-Forwarded-For', fakeIp);
             expect(res.statusCode).toBe(401);
         });
 
         it('should return empty array for new patient', async () => {
             const res = await request(appInstance)
                 .get('/api/v1/sessions')
-                .set('Authorization', `Bearer ${mockPatientToken}`);
+                .set('Authorization', `Bearer ${mockPatientToken}`)
+                .set('X-Forwarded-For', fakeIp);
             
             expect(res.statusCode).toBe(200);
             expect(res.body.success).toBe(true);
@@ -75,6 +83,7 @@ describe('Session API Endpoints', () => {
             const res = await request(appInstance)
                 .post('/api/v1/sessions')
                 .set('Authorization', `Bearer ${mockPatientToken}`)
+                .set('X-Forwarded-For', fakeIp)
                 .send(sessionData);
 
             // Expecting 201 Created or 200 depending on your controller implementation
@@ -91,7 +100,8 @@ describe('Session API Endpoints', () => {
         it('should allow patient to access patient/my-sessions', async () => {
             const res = await request(appInstance)
                 .get('/api/v1/sessions/patient/my-sessions')
-                .set('Authorization', `Bearer ${mockPatientToken}`);
+                .set('Authorization', `Bearer ${mockPatientToken}`)
+                .set('X-Forwarded-For', fakeIp);
             
             expect(res.statusCode).toBe(200);
         });
@@ -99,7 +109,8 @@ describe('Session API Endpoints', () => {
         it('should forbid patient from accessing therapist/my-sessions', async () => {
             const res = await request(appInstance)
                 .get('/api/v1/sessions/therapist/my-sessions')
-                .set('Authorization', `Bearer ${mockPatientToken}`);
+                .set('Authorization', `Bearer ${mockPatientToken}`)
+                .set('X-Forwarded-For', fakeIp);
             
             expect(res.statusCode).toBe(403); // Forbidden due to verifyRole
         });
@@ -107,7 +118,8 @@ describe('Session API Endpoints', () => {
         it('should allow therapist to access therapist/my-sessions', async () => {
             const res = await request(appInstance)
                 .get('/api/v1/sessions/therapist/my-sessions')
-                .set('Authorization', `Bearer ${mockTherapistToken}`);
+                .set('Authorization', `Bearer ${mockTherapistToken}`)
+                .set('X-Forwarded-For', fakeIp);
             
             expect(res.statusCode).toBe(200);
         });
