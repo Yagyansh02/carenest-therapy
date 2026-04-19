@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { generateAccessToken, generateRefreshToken, generateTokens } from '../../../src/utils/generateTokens.js';
+import { generateAccessToken, generateRefreshToken, generateTokens } from '../../src/utils/generateTokens.js';
 import jwt from 'jsonwebtoken';
 
 describe('Token Generation Utilities', () => {
