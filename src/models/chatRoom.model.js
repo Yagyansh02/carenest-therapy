@@ -100,5 +100,7 @@ chatRoomSchema.index(
   { unique: true }
 );
 chatRoomSchema.index({ status: 1, lastMessageAt: -1 });
+chatRoomSchema.index({ patientId: 1, status: 1 });
+chatRoomSchema.index({ therapistId: 1, status: 1 });
 
 export const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);

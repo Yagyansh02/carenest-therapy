@@ -161,7 +161,8 @@ const getCollegeById = asyncHandler(async (req, res) => {
 
   const college = await College.findById(id)
     .populate("userId", "fullName email role createdAt")
-    .populate("affiliatedStudents", "fullName email");
+    .populate("affiliatedStudents", "fullName email")
+    .lean();
 
   if (!college) {
     throw new ApiError(404, "College not found");

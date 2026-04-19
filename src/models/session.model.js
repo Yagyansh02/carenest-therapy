@@ -118,5 +118,7 @@ const sessionSchema = new Schema(
 sessionSchema.index({ patientId: 1, scheduledAt: -1 });
 sessionSchema.index({ therapistId: 1, scheduledAt: -1 });
 sessionSchema.index({ status: 1, scheduledAt: -1 });
+sessionSchema.index({ therapistId: 1, status: 1, scheduledAt: -1 });
+sessionSchema.index({ patientId: 1, status: 1, scheduledAt: -1 });
 
 export const Session = mongoose.model("Session", sessionSchema);

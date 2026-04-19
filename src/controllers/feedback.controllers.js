@@ -154,7 +154,8 @@ const getFeedbackById = asyncHandler(async (req, res) => {
   const feedback = await Feedback.findById(id)
     .populate("fromUser", "fullName email role")
     .populate("toUser", "fullName email role")
-    .populate("sessionId", "scheduledAt duration status");
+    .populate("sessionId", "scheduledAt duration status")
+    .lean();
 
   if (!feedback) throw new ApiError(404, "Feedback not found");
 
@@ -224,7 +225,8 @@ const getAllFeedbacks = asyncHandler(async (req, res) => {
     .populate("sessionId", "scheduledAt duration status")
     .sort(sortBy)
     .skip(skip)
-    .limit(parseInt(limit));
+    .limit(parseInt(limit))
+    .lean();
 
   const totalFeedbacks = await Feedback.countDocuments(filter);
 
@@ -234,7 +236,7 @@ const getAllFeedbacks = asyncHandler(async (req, res) => {
       req.user._id.toString() !== feedback.fromUser._id.toString() &&
       req.user.role !== "admin"
     ) {
-      const feedbackObj = feedback.toObject();
+      const feedbackObj = { ...feedback };
       feedbackObj.fromUser = { fullName: "Anonymous", email: "anonymous@example.com", role: feedback.fromUser.role };
       return feedbackObj;
     }

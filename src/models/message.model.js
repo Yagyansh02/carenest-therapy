@@ -76,5 +76,6 @@ const messageSchema = new Schema(
 // Compound indexes for efficient queries
 messageSchema.index({ chatRoomId: 1, createdAt: -1 });
 messageSchema.index({ senderId: 1, createdAt: -1 });
+messageSchema.index({ chatRoomId: 1, senderId: 1, isRead: 1 });
 
 export const Message = mongoose.model("Message", messageSchema);

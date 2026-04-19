@@ -111,7 +111,8 @@ const getSessionById = asyncHandler(async (req, res) => {
   const session = await Session.findById(id)
     .populate("patientId", "fullName email phoneNumber")
     .populate("therapistId", "fullName email phoneNumber")
-    .populate("cancelledBy", "fullName email");
+    .populate("cancelledBy", "fullName email")
+    .lean();
 
   if (!session) {
     throw new ApiError(404, "Session not found");
@@ -174,7 +175,8 @@ const getAllSessions = asyncHandler(async (req, res) => {
     .populate("cancelledBy", "fullName email")
     .sort(sortBy)
     .skip(skip)
-    .limit(limitNum);
+    .limit(limitNum)
+    .lean();
 
   const totalSessions = await Session.countDocuments(filter);
 
@@ -294,7 +296,8 @@ const getMyTherapistSessions = asyncHandler(async (req, res) => {
     })
     .sort(sortBy)
     .skip(skip)
-    .limit(limitNum);
+    .limit(limitNum)
+    .lean();
 
   const totalSessions = await Session.countDocuments(filter);
 
