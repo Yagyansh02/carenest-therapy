@@ -7,6 +7,7 @@ import {
   getMyProfile,
   addStudentToCollege,
   removeStudentFromCollege,
+  createStudentProfile,
   deleteCollegeProfile,
 } from "../controllers/college.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -31,6 +32,7 @@ router.route("/profile").delete(deleteCollegeProfile);
 router.route("/:id").get(getCollegeById);
 
 // Student affiliation management
+router.route("/students/create").post(createStudentProfile);
 router.route("/students/:studentId").post(addStudentToCollege);
 router.route("/students/:studentId").delete(removeStudentFromCollege);
 

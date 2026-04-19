@@ -1,5 +1,7 @@
 import { College } from "../models/college.models.js";
 import { User } from "../models/user.models.js";
+import { Therapist } from "../models/therapist.models.js";
+import { Supervisor } from "../models/supervisor.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -430,6 +432,76 @@ const removeStudentFromCollege = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Create a new student (therapist model) from College Dashboard
+ * @route POST /api/v1/colleges/students/create
+ * @access Private (College only)
+ */
+const createStudentProfile = asyncHandler(async (req, res) => {
+  const {
+    fullName,
+    email,
+    password,
+    supervisorLicenseNumber, // the license number of the supervisor
+    specializations,
+    sessionRate = 0,
+    bio,
+  } = req.body;
+
+  if (req.user.role !== "college") {
+    throw new ApiError(403, "Only college users can create student profiles.");
+  }
+
+  const collegeProfile = await College.findOne({ userId: req.user._id });
+  if (!collegeProfile) {
+    throw new ApiError(404, "College profile not found. Please create one first.");
+  }
+
+  if (!fullName || !email || !password || !supervisorLicenseNumber) {
+    throw new ApiError(400, "Full name, email, password, and supervisor license number are required.");
+  }
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+  if (existingUser) {
+    throw new ApiError(409, "User with this email already exists.");
+  }
+
+  // Verify the supervisor by professional license number
+  const supervisorProfile = await Supervisor.findOne({ professionalLicenseNumber: supervisorLicenseNumber.trim() });
+  if (!supervisorProfile) {
+    throw new ApiError(404, "Base supervisor not found with this license number.");
+  }
+
+  // Create the User document
+  const studentUser = await User.create({
+    fullName: fullName.trim(),
+    email: email.toLowerCase().trim(),
+    password,
+    role: "therapist", // They operate under the therapist model
+    isActive: true,
+  });
+
+  // Create the Therapist profile
+  const studentProfile = await Therapist.create({
+    userId: studentUser._id,
+    isStudent: true,
+    supervisorId: supervisorProfile._id,
+    specializations: specializations || [],
+    sessionRate: sessionRate,
+    bio: bio || "",
+    verificationStatus: "verified", // Assume verified since college created it
+  });
+
+  // Automatically affiliate the student with the college
+  collegeProfile.affiliatedStudents.push(studentUser._id);
+  await collegeProfile.save();
+
+  return res.status(201).json(
+    new ApiResponse(201, { user: studentUser, profile: studentProfile }, "Student profile created and affiliated successfully")
+  );
+});
+
+/**
  * Delete college profile
  * @route DELETE /api/v1/colleges/profile
  * @access Private (College only)
@@ -454,5 +526,6 @@ export {
   getMyProfile,
   addStudentToCollege,
   removeStudentFromCollege,
+  createStudentProfile,
   deleteCollegeProfile,
 };
