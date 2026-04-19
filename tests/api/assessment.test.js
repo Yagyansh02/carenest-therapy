@@ -84,11 +84,11 @@ describe('Assessment API Endpoints', () => {
             const assessmentData = {
                 concerns: ['Anxiety', 'Stress'],
                 impactLevel: 3,
-                ageGroup: '18-25',
+                ageGroup: '18-24',
                 occupation: 'Student',
-                lifestyle: 'Moderate',
-                activityLevel: 'Moderate',
-                duration: 'Less than 1 month'
+                lifestyle: 'Balanced between work and personal life',
+                activityLevel: 'Moderately active (exercise 3-4 days a week)',
+                duration: 'Less than a month'
             };
 
             const res = await request(appInstance)

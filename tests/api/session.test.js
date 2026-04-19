@@ -73,11 +73,11 @@ describe('Session API Endpoints', () => {
     describe('POST /api/v1/sessions', () => {
         it('should allow a patient to create a session', async () => {
             const sessionData = {
-                therapist: mockTherapistId,
-                date: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-                timeSlot: '10:00 AM - 11:00 AM',
-                type: 'video',
-                paymentMethod: 'card'
+                therapistId: mockTherapistId,
+                patientId: mockPatientId,
+                scheduledAt: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+                duration: 60,
+                sessionFee: 100
             };
 
             const res = await request(appInstance)
@@ -89,9 +89,11 @@ describe('Session API Endpoints', () => {
             // Expecting 201 Created or 200 depending on your controller implementation
             expect([200, 201]).toContain(res.statusCode);
             expect(res.body.success).toBe(true);
-            if (res.body.data && res.body.data.session) {
-                expect(res.body.data.session).toHaveProperty('_id');
-                expect(res.body.data.session.patient.toString()).toBe(mockPatientId.toString());
+            if (res.body.data) {
+                const session = res.body.data.session || res.body.data;
+                expect(session).toHaveProperty('_id');
+                const pId = session.patientId?._id || session.patientId;
+                expect(pId.toString()).toBe(mockPatientId.toString());
             }
         });
     });

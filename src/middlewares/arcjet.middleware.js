@@ -12,6 +12,11 @@ import { ApiError } from "../utils/ApiError.js";
  */
 export const arcjetMiddleware = (arcjetRule) => {
   return async (req, res, next) => {
+    // Bypass arcjet totally during tests to avoid failed APIs, rate limiting or unhandled exceptions.
+    if (process.env.NODE_ENV === "test") {
+      return next();
+    }
+    
     try {
       // Get user identifier (IP address or user ID if authenticated)
       const userId = req.user?._id?.toString() || req.ip || "anonymous";

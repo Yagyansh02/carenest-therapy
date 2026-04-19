@@ -52,7 +52,7 @@ describe('Chat API Endpoints', () => {
             const res = await request(app).get('/api/v1/chat/unread-count').set('Authorization', `Bearer ${mockPatientToken}`).set('X-Forwarded-For', fakeIp);
             expect(res.statusCode).toBe(200);
             expect(res.body.success).toBe(true);
-            expect(res.body.data.unreadCount).toBe(0);
+            expect(res.body.data.totalUnread).toBe(0);
         });
     });
 });

@@ -17,6 +17,7 @@ export const errorHandler = (err, req, res, next, errorLogStream) => {
   if (!(error instanceof ApiError)) {
     const statusCode = error.statusCode || 500;
     const message = error.message || "Something went wrong";
+    if (process.env.NODE_ENV === "test") console.error("TEST ERROR:", error);
     error = new ApiError(statusCode, message, error.errors || [], err.stack);
   }
 
