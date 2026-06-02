@@ -106,9 +106,26 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering user");
   }
 
+  // Auto-login: generate tokens so the user is immediately authenticated
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
   return res
     .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered successfully"));
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        201,
+        {
+          user: createdUser,
+          accessToken,
+          refreshToken,
+        },
+        "User registered successfully"
+      )
+    );
 });
 
 /**
