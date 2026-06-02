@@ -11,8 +11,8 @@ import { getCache, setCache, deleteCache } from "../db/redis.js";
  * 1. Authorization header (Bearer token)
  * 2. Cookies (accessToken)
  * 
- * Performance: Caches authenticated user in Redis (60s TTL) to avoid
- * hitting MongoDB on every single authenticated request.
+ * Performance: Stateless JWT verification. Extracts user info directly
+ * from token payload.
  * 
  * @throws {ApiError} 401 - If token is missing or invalid
  */
@@ -28,25 +28,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    // Try Redis cache first — avoids DB hit on every request
-    const cacheKey = `user:${decodedToken._id}`;
-    let user = await getCache(cacheKey);
-
-    if (!user) {
-      // Cache miss — fetch from DB and cache for 60 seconds
-      user = await User.findById(decodedToken._id).select(
-        "-password -refreshToken"
-      );
-
-      if (!user) {
-        throw new ApiError(401, "Invalid access token");
-      }
-
-      // Cache the user object (convert Mongoose doc to plain object)
-      await setCache(cacheKey, user.toObject ? user.toObject() : user, 60);
-    }
-
-    req.user = user;
+    req.user = decodedToken;
     next();
   } catch (error) {
     throw new ApiError(401, error?.message || "Invalid access token");
